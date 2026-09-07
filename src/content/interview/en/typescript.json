@@ -1,0 +1,857 @@
+[
+  {
+    "questionId": "typescript-junior-01",
+    "locale": "en",
+    "translatedFromHash": "d2354cd9e0a2f17084edc03b60463a021bdf1cc4111487ea7a49395948174c9b",
+    "question": "What is TypeScript, and why should you use it?",
+    "quickAnswer": "TypeScript is JavaScript with a compile-time type system. It catches many integration mistakes before the code runs, while still producing ordinary JavaScript.",
+    "conceptualExplanation": "The TypeScript compiler checks the relationships between values, functions, and contracts, then erases the type information when it emits JavaScript.",
+    "productionTradeOff": "A project gains earlier feedback and safer refactoring, but must pay for an additional build step and deliberate type modelling.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Shared domain and contract packages keep room, command, and event shapes consistent across the backend, worker, and web application."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-02",
+    "locale": "en",
+    "translatedFromHash": "1679cc3c6d2a2e1f2be32471e12649bc20c301f56442b8732986f4e281d7d44b",
+    "question": "How does compile-time validation differ from runtime validation?",
+    "quickAnswer": "TypeScript protects the code visible to the compiler, whereas runtime validation protects the actual data entering a process. External JSON should remain `unknown` until it has been checked.",
+    "conceptualExplanation": "A parser such as Zod evaluates a runtime value and either returns validated data or reports a structured error; TypeScript types alone are erased before that value arrives.",
+    "productionTradeOff": "Runtime checks consume CPU and add schemas to maintain, but omitting them leaves every untrusted boundary exposed.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Zod validates HTTP and Socket.IO payloads even when the caller also uses the matching TypeScript type."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-03",
+    "locale": "en",
+    "translatedFromHash": "0f38a6028f828b6d9775646d855965a1fe589a98132f7bdd5e8b581fa4b94b1c",
+    "question": "What is type inference?",
+    "quickAnswer": "Type inference lets the compiler determine a type without an explicit annotation. It keeps local code concise while preserving useful type safety.",
+    "conceptualExplanation": "The compiler derives types from initial values, control flow, function signatures, and contextual typing at the point of use.",
+    "productionTradeOff": "Inference reduces noise, but exported boundaries benefit from explicit return types that make contracts and accidental changes visible.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Local variables inside a transition are inferred, while a public service method explicitly returns `Promise<RoomView>`."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-04",
+    "locale": "en",
+    "translatedFromHash": "63e90f408c7b313a820d0f81b71641270e988b40ad4dad8c3898f0aa6954f957",
+    "question": "When should you use `interface`, and when should you use `type`?",
+    "quickAnswer": "Both describe shapes. An `interface` is a natural fit for an extensible object contract, while a `type` can also express unions, tuples, and aliases.",
+    "conceptualExplanation": "Interfaces support declaration merging; type aliases compose through unions and intersections. For ordinary object shapes, either can often work.",
+    "productionTradeOff": "Team consistency and a clear public contract matter more than treating either construct as universally superior.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Event variants use a `type` union, while a document or view object can be represented by an interface."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-05",
+    "locale": "en",
+    "translatedFromHash": "dfb205b62309d55d51c270b992a43420def1f4232873d8f3e6d61ad60e7e40bd",
+    "question": "Explain `any`, `unknown`, and `never`.",
+    "quickAnswer": "`any` disables type checking, `unknown` requires proof before use, and `never` represents a value that cannot occur. Prefer `unknown` at uncertain boundaries and use `never` to expose unreachable cases.",
+    "conceptualExplanation": "Type guards narrow `unknown` into a usable type. In an exhaustive switch, handling every union member leaves the remaining value narrowed to `never`.",
+    "productionTradeOff": "`any` is convenient for migration or isolated interop, but it propagates lost safety through every consumer that touches it.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A caught error is treated as `unknown`, while `never` can verify that every game event or state variant has been handled."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-06",
+    "locale": "en",
+    "translatedFromHash": "24d8bc4b5116fd06abf09bd17d6560dbe9a76d30a8ffb07c3e18259b1ae627d0",
+    "question": "What is a union type, and how is it narrowed?",
+    "quickAnswer": "A union allows a value to be one of several types. Narrowing supplies evidence that identifies the specific member before member-specific fields are used.",
+    "conceptualExplanation": "Checks using `typeof`, `in`, equality, or a discriminant property narrow the value along TypeScript's control-flow analysis.",
+    "productionTradeOff": "Broad unions model alternatives well, but require disciplined branching and exhaustive handling as variants grow.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A discriminant such as room `status` or event `type` makes branches safe across lobby, active, completed, and cancelled variants."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-07",
+    "locale": "en",
+    "translatedFromHash": "1d50983277f3c65e7f7474696c16c771999508309e7d092506dfee12878e9e5c",
+    "question": "How do `null`, `undefined`, and an optional property differ?",
+    "quickAnswer": "`undefined` commonly means absent or not initialized, `null` is an intentional empty value, and `prop?: T` allows the property itself to be omitted. A codebase should define which meaning belongs at each boundary.",
+    "conceptualExplanation": "With `strictNullChecks`, neither `null` nor `undefined` can be used as `T` without an explicit check, and property absence can be distinguished when necessary.",
+    "productionTradeOff": "Inconsistent conventions make APIs ambiguous and complicate serialization, patches, and database updates.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "`turnDeadlineAt: null` explicitly means there is no deadline, while the invite code is an optional field returned only during creation."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-08",
+    "locale": "en",
+    "translatedFromHash": "d0dac1acb7b94f43aa1b4141b1eb889ac1e2adab3e75f25b381065d3d06edb74",
+    "question": "Why are string-literal unions often preferred over enums?",
+    "quickAnswer": "A string-literal union often models protocol values with no emitted runtime code and maps naturally to JSON. An enum is useful when the application genuinely needs a runtime namespace or object.",
+    "conceptualExplanation": "A type such as `'LOBBY' | 'ACTIVE'` exists only in the type system, while most enum forms emit a JavaScript value.",
+    "productionTradeOff": "Literal unions are lightweight but do not provide a runtime value; that difference should drive the choice rather than style alone.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Room and game statuses travel as stable JSON strings, so literal unions fit their wire representation."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-09",
+    "locale": "en",
+    "translatedFromHash": "5d04d5f7f9c843321548c20aae6e1fe93a1fe47e6667ceb8033ffe9bba26ea10",
+    "question": "What does `readonly` guarantee?",
+    "quickAnswer": "`readonly` prevents assignment through the typed reference. It does not make an object deeply immutable or freeze it at runtime.",
+    "conceptualExplanation": "The compiler rejects writes to a marked property, but nested mutable values and other writable references can still change the same runtime object.",
+    "productionTradeOff": "Deep immutability requires recursive modelling or disciplined immutable updates, which can add types, copies, and allocations.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Domain transitions return a new state instead of mutating the previous game state."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-10",
+    "locale": "en",
+    "translatedFromHash": "a42736fa58f6a025bbd6596edd10e5978bcb4c6ec7b3a8593d469898760d1df5",
+    "question": "What problem do generics solve?",
+    "quickAnswer": "Generics preserve a type relationship between inputs and outputs while allowing the implementation to be reused. They avoid choosing between duplicated code and untyped results.",
+    "conceptualExplanation": "A type parameter such as `T` is supplied explicitly or inferred at the call site and is carried through the generic signature.",
+    "productionTradeOff": "Overly abstract generics can hide intent, produce difficult errors, and make an API harder to read than a few concrete types.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "`memoryCache.get<RoomSummary[]>()` returns the expected cached value type without a cast at every call site."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-11",
+    "locale": "en",
+    "translatedFromHash": "6fc03116b4dc5a4246c2671f6fb9cfcc8d62ccfb42e5c79eecde69acb99bfbc2",
+    "question": "How should you type an `async` function?",
+    "quickAnswer": "An `async` function always returns a `Promise`, so a clear public boundary can declare a type such as `Promise<RoomView>`. The annotation documents both the asynchronous contract and the resolved value.",
+    "conceptualExplanation": "A returned value is wrapped in a promise, while a thrown error rejects that promise. Callers must await or otherwise handle that work.",
+    "productionTradeOff": "Forgetting `await` can start unobserved work, lose error handling, or create a race even when the declared types are otherwise correct.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "The database transaction and cache invalidation are awaited before a command is considered complete."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-12",
+    "locale": "en",
+    "translatedFromHash": "7cc0794c56cb4795a19be31c322da2d3de7cf7f5589eed1f4125a8d4435eb7c0",
+    "question": "What is structural typing?",
+    "quickAnswer": "TypeScript compatibility is primarily based on members rather than a class's declared identity. A value that provides the required properties can satisfy the target shape.",
+    "conceptualExplanation": "The compiler compares the structure of source and target types instead of requiring them to share a nominal declaration or inheritance chain.",
+    "productionTradeOff": "Values such as IDs can share the same structure and be mixed up accidentally; branded types can add identity when that risk matters.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Plain room views cross package boundaries easily, while branded types can distinguish `RoomId` from `UserId`."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-13",
+    "locale": "en",
+    "translatedFromHash": "94bb27ee608bfb042ea0b58ab30a3d42bf27a79d4bc44dcca3b86b6bafe9ac6f",
+    "question": "What are ES modules and type-only imports?",
+    "quickAnswer": "A module defines a file boundary for imports and exports. `import type` imports compile-time information only and is removed from emitted JavaScript.",
+    "conceptualExplanation": "Because type-only imports are erased, they can express a static contract dependency without creating a runtime module load.",
+    "productionTradeOff": "Mixing runtime and type imports unnecessarily can add dependencies or cycles, while a type-only symbol cannot be used as a runtime token.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Shared contract types can be imported without pulling a server implementation into the consuming bundle."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-14",
+    "locale": "en",
+    "translatedFromHash": "8c2eb4d448915024199d0bc120c092a1de839209d9d47f9a52a398c481c0ed9d",
+    "question": "Why enable strict compiler options?",
+    "quickAnswer": "Strict compiler options turn unsafe assumptions into compile errors. They establish a stronger and more consistent safety baseline for every contributor.",
+    "conceptualExplanation": "Options such as `strictNullChecks`, `noImplicitAny`, `noUncheckedIndexedAccess`, and `useUnknownInCatchVariables` make the compiler demand evidence where JavaScript would otherwise assume.",
+    "productionTradeOff": "Enabling strictness in an existing codebase can surface many migration errors and should be staged without allowing new unsafe code.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A shared base configuration enables these flags so every workspace uses the same safety baseline."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-junior-15",
+    "locale": "en",
+    "translatedFromHash": "e90215ce98bb98d418e9a6aab8a6b90e275ec09aed71f0887318f99d69ed57f2",
+    "question": "Why does GameStream use both TypeScript types and Zod schemas?",
+    "quickAnswer": "Types protect internal development, while schemas protect external runtime boundaries. They solve related problems at different stages and neither replaces the other.",
+    "conceptualExplanation": "Zod parses a runtime value and can infer, or be checked against, the corresponding static type before validated data enters typed domain code.",
+    "productionTradeOff": "Duplicated models can drift, so the runtime schema should be treated as the source of truth for an external boundary whenever practical.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Commands arriving through HTTP or sockets are parsed before they enter a typed domain transition."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-01",
+    "locale": "en",
+    "translatedFromHash": "18fdf29d187b68e845faedd526ff0404e11822f55d53aee961cb201b49b2427d",
+    "question": "How does a discriminated union improve domain modelling?",
+    "quickAnswer": "A discriminated union represents a closed set of variants together with the data that is valid for each variant. It makes invalid field access visible to the compiler.",
+    "conceptualExplanation": "A shared literal property narrows the union, so each branch exposes only the fields belonging to that specific variant.",
+    "productionTradeOff": "Adding a variant intentionally forces every exhaustive consumer to be updated, which increases change effort but prevents silent omissions.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "An integration-event switch narrows on `type`, preventing a handler from reading a field that does not exist on that event."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-02",
+    "locale": "en",
+    "translatedFromHash": "8e2a702fa3c0b3537c7353a413f7b964661c1616459bf7aaa99e2768a885fbff",
+    "question": "How do you implement exhaustive checking?",
+    "quickAnswer": "Handle every union member and assign the remaining value in the default branch to `never`. A newly added variant then produces a compile error wherever it has not been handled.",
+    "conceptualExplanation": "Once every known discriminant has been checked, control-flow analysis narrows the remainder to `never`; an unhandled member prevents that narrowing.",
+    "productionTradeOff": "This technique works best for unions intended to be closed and is less suitable for externally extensible sets of values.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A projector can fail compilation when a new room event has no corresponding projection handler."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-03",
+    "locale": "en",
+    "translatedFromHash": "59e834fad56add3dbb68719bddda973e39b849629b6e60829a01975861cb1fbd",
+    "question": "What is a generic constraint?",
+    "quickAnswer": "A generic constraint limits which type arguments are accepted while preserving reuse. It states the minimum capability generic code needs from its input.",
+    "conceptualExplanation": "For example, `T extends { id: string }` lets the implementation read `id` safely while retaining the caller's more specific type.",
+    "productionTradeOff": "A constraint that is too broad provides little safety, while one that is too narrow prevents legitimate reuse and increases coupling.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "An event utility can constrain inputs to the common integration-event envelope while preserving each event's specific payload."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-04",
+    "locale": "en",
+    "translatedFromHash": "6a7a20631d63c6c70104c8ba42dd72b140edcdfe36d4f8684e88781edf7d7ace",
+    "question": "When are utility types useful?",
+    "quickAnswer": "Utility types such as `Pick`, `Omit`, `Partial`, `Required`, `Readonly`, and `Record` derive related shapes from one source type. They reduce duplication when the relationship is genuine and easy to understand.",
+    "conceptualExplanation": "Most utility types are mapped types that transform keys or property modifiers, optionally selecting or excluding part of the original shape.",
+    "productionTradeOff": "Deeply nested utilities can conceal the actual public API and produce error messages that are harder to understand than an explicit type.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A public room summary can conceptually derive from the internal room document while omitting the invite hash."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-05",
+    "locale": "en",
+    "translatedFromHash": "06ea11aab2f68e024335d8e8be4fc433eb9d136fb18702a82190c064855d1dee",
+    "question": "What are mapped types and conditional types?",
+    "quickAnswer": "A mapped type transforms properties, while a conditional type selects a result based on assignability. Together they can express useful relationships between a family of types.",
+    "conceptualExplanation": "Conditional types can distribute over unions and infer a subtype; mapped types iterate over property keys and transform their values or modifiers.",
+    "productionTradeOff": "Clever type-level programs increase compiler cost and cognitive load, so a simpler explicit contract may be the better production design.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "An event-to-payload map can generate precise handler signatures without maintaining many overloads."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-06",
+    "locale": "en",
+    "translatedFromHash": "c055205a8bdbbfbc0b289d9543012b9a52865cabfd23e72acb9afa8b38b5ce27",
+    "question": "What is variance, and why does it matter for callbacks?",
+    "quickAnswer": "Variance describes how subtype relationships propagate through a generic type. For callbacks, accepting a narrower parameter than the caller may provide is unsafe.",
+    "conceptualExplanation": "Under strict function checks, function parameters are checked contravariantly and return types covariantly, although some method and mutable-container rules retain soundness gaps.",
+    "productionTradeOff": "Looser bivariance can make framework APIs convenient, but it may accept callbacks that fail when invoked with another valid member of the broader type.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A handler that accepts only `game.started` cannot be registered where any integration event may be delivered."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-07",
+    "locale": "en",
+    "translatedFromHash": "c7b8532c88ec9313d6662b3ab952c7d1fbca9fc61bb956c329beea36cf59d3e5",
+    "question": "What does the `satisfies` operator provide?",
+    "quickAnswer": "`satisfies` checks compatibility with a target contract without replacing the expression's more precise inferred type. It verifies a constraint while preserving useful literal information.",
+    "conceptualExplanation": "The compiler validates the value against the target type but keeps narrow keys and values available to later inference.",
+    "productionTradeOff": "`satisfies` performs no runtime validation, so untrusted data still needs a parser or schema at the boundary.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A configuration map can be checked for every required key while retaining each service name as a narrow literal."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-08",
+    "locale": "en",
+    "translatedFromHash": "0d6e324fd947f28d72dbfc1fe43494bf58bb17ecdaf8bb00c295a70249eb64f4",
+    "question": "Why is a type assertion dangerous?",
+    "quickAnswer": "A type assertion asks the compiler to trust the developer; it does not prove anything at runtime. It can hide the exact mismatch that a boundary should detect.",
+    "conceptualExplanation": "Writing `value as RoomView` bypasses the normal need to establish compatibility, but the runtime value remains unchanged and may still be malformed.",
+    "productionTradeOff": "Assertions are sometimes necessary at an audited library boundary, but broad or repeated assertions silently shift risk to every downstream user.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "JSON read from Redis should be parsed and validated at important boundaries rather than blindly cast to the desired type."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-09",
+    "locale": "en",
+    "translatedFromHash": "6c6399c8c21edde8c923aa4a925bdab42016b66ef2ed1d923446acae0723053d",
+    "question": "How do type-only imports support architecture?",
+    "quickAnswer": "A type-only import makes a compile-time dependency explicit and avoids an unintended emitted import. This helps keep runtime package boundaries narrow.",
+    "conceptualExplanation": "TypeScript erases `import type`, so the consumer can depend on a protocol shape without causing that module to load in JavaScript.",
+    "productionTradeOff": "The imported symbol cannot serve as a runtime token, and architecture still needs tooling to prevent unwanted runtime dependencies elsewhere.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "The web application consumes shared protocol shapes without accidentally importing a server implementation."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-10",
+    "locale": "en",
+    "translatedFromHash": "eddddf426c43519e1c08313de9f78530617c8c06caf69cabb9943466a5c032dd",
+    "question": "Why should a workspace package publish declaration files?",
+    "quickAnswer": "A `.d.ts` file publishes the package's public type contract to consumers. It lets dependent workspaces compile against stable signatures without importing the package's source implementation.",
+    "conceptualExplanation": "The `declaration` and `declarationMap` options emit signatures and source mappings that participate in project-reference or workspace build order.",
+    "productionTradeOff": "Every exported type becomes compatibility surface that must be versioned and maintained, so internal types should not leak by accident.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "The domain and contracts packages build declarations before the backend, worker, and web consumers compile."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-11",
+    "locale": "en",
+    "translatedFromHash": "5a18a4b97e963675ea9f90a6fccb495b0aa3d5567b9693ca346d848422b999af",
+    "question": "How should a DTO type relate to its runtime schema?",
+    "quickAnswer": "The runtime schema should define, or be checked to match, the boundary type. Only the parsed value should be allowed into trusted application or domain code.",
+    "conceptualExplanation": "Where practical, infer the static type from Zod so one executable schema validates the value and supplies the TypeScript contract.",
+    "productionTradeOff": "Framework metadata may require a separate class, which introduces duplication and a risk that static and runtime definitions drift apart.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A Zod validation pipe ensures controller input satisfies the command contract before the service executes."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-12",
+    "locale": "en",
+    "translatedFromHash": "6fefeb022c8d1c432cb652fc728d2b58c7279b0d4be4f1e4e8d0dac0104be1d1",
+    "question": "Why is `useUnknownInCatchVariables` valuable?",
+    "quickAnswer": "JavaScript can throw any value, so a caught value is not automatically an `Error`. Treating it as `unknown` forces code to establish a safe shape before reading properties.",
+    "conceptualExplanation": "A handler must use `instanceof Error` or another guard before accessing `.message`, and can normalize non-Error values explicitly.",
+    "productionTradeOff": "Error handling becomes slightly longer, but logs and recovery code no longer rely on an unsafe assumption about third-party failures.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A worker can safely normalize any thrown value when it records a projection failure."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-13",
+    "locale": "en",
+    "translatedFromHash": "8019e38c735fcbc107133adc97e1aaf7aa12605a72b61fde106936de5e6838cc",
+    "question": "When should you return a result union instead of throwing?",
+    "quickAnswer": "Use a result union for an expected domain outcome and exceptions for unexpected infrastructure failures or framework control flow. The distinction makes recoverable business decisions explicit.",
+    "conceptualExplanation": "A shape such as `{ ok: true, value } | { ok: false, error }` forces the caller to branch before accessing either the value or the typed failure.",
+    "productionTradeOff": "Result values add plumbing across layers, while overusing exceptions hides expected control flow and weakens exhaustive handling.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A domain transition can return a typed rule failure, while Nest handles an unexpected database failure as a server error."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-14",
+    "locale": "en",
+    "translatedFromHash": "7fe230d92523bcea95f6f3fbedd7a214e03738205997210724a952feb7fec3f2",
+    "question": "How does immutable state support concurrent systems?",
+    "quickAnswer": "Immutable transitions make the before and after states explicit and reduce hidden side effects. They improve reasoning and testing, but do not provide cross-process concurrency control.",
+    "conceptualExplanation": "A transition function derives a new object and event from its input state instead of mutating shared state in place.",
+    "productionTradeOff": "Copies require allocations, and correctness under concurrent writes still depends on versions, transactions, or atomic database operations.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A pure dice transition is combined with an expected-version update in MongoDB."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-middle-15",
+    "locale": "en",
+    "translatedFromHash": "4e6aa8fef2b4053d4f2baaf683c2c857b18adffe092148ca165f9592ac8f4513",
+    "question": "Which TypeScript guarantees disappear after compilation?",
+    "quickAnswer": "All type annotations and most type-only constructs disappear. The JavaScript runtime can still receive malformed JSON, lose a race, or encounter an unavailable service.",
+    "conceptualExplanation": "Type erasure means the compiler proves relationships in the source program but emits no general runtime enforcement for those contracts.",
+    "productionTradeOff": "Runtime guards, tests, database constraints, and operational controls remain necessary even in a codebase with strict TypeScript settings.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "TypeScript alone cannot guarantee that a Socket.IO payload, JWT, MongoDB document, or Kafka event is valid."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-01",
+    "locale": "en",
+    "translatedFromHash": "9a73a4a6062d4f4bb24141f1dcbd7c16ddb834e07c825eabb2c7a24b3f1a4e13",
+    "question": "Is TypeScript completely sound?",
+    "quickAnswer": "No. TypeScript intentionally prioritizes JavaScript ergonomics, interoperability, and gradual adoption over proof-level soundness.",
+    "conceptualExplanation": "Assertions, `any`, array covariance, unchecked external data, and some callback rules can invalidate assumptions that the static type system appears to establish.",
+    "productionTradeOff": "The language gains practical compatibility with the JavaScript ecosystem, but teams must close important gaps with validation and runtime invariants.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Strict settings reduce the gap, while Zod schemas and database invariants protect runtime boundaries."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-02",
+    "locale": "en",
+    "translatedFromHash": "f20c444006eb3eb89ac6570fd57e74f655207d2d11dc60035c5ce3fdbf141767",
+    "question": "How do you design a trustworthy boundary for untyped data?",
+    "quickAnswer": "Accept the data as `unknown`, parse it once, and allow only a validated domain type past the boundary. A failed parse should return a structured error instead of a partially trusted value.",
+    "conceptualExplanation": "A runtime schema checks shape, bounds, and discriminants, then creates the typed value consumed by the inner application.",
+    "productionTradeOff": "Validation adds latency and schema-evolution work, but it localizes distrust and prevents malformed values from contaminating domain logic.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "HTTP, Socket.IO, OAuth tokens, and Kafka events each need a clear anti-corruption boundary."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-03",
+    "locale": "en",
+    "translatedFromHash": "fdc43aa9bc23044ba3c6558f3f2128a9621db713093ae56a0a1b2f165a206add",
+    "question": "How should a shared event contract evolve?",
+    "quickAnswer": "Use an envelope with stable identity and an explicit schema version. Make compatible changes additive, or publish a new version when existing consumers cannot interpret the new contract safely.",
+    "conceptualExplanation": "Consumers validate the version and may ignore only optional additions covered by an established compatibility rule.",
+    "productionTradeOff": "Supporting multiple versions increases operational and testing complexity, but an unversioned breaking change transfers that cost to every consumer at once.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "`schemaVersion`, event ID, aggregate version, correlation ID, and versioned Kafka topics support controlled evolution."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-04",
+    "locale": "en",
+    "translatedFromHash": "463b86fe7c8bda6ccdab8b339c46a6f3747e7a7737b54a93da9b40ad086a390c",
+    "question": "Should you use branded identifiers?",
+    "quickAnswer": "Use branded identifiers when confusing structurally identical primitive IDs is a meaningful defect risk. The brand gives nominal-like identity without changing the serialized representation.",
+    "conceptualExplanation": "Intersect a primitive with a unique phantom marker and create values through a validated constructor rather than arbitrary assertions.",
+    "productionTradeOff": "Serialization removes the compile-time brand, so every external boundary must validate and re-establish it deliberately.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A brand can prevent passing a `UserId` where a `RoomId` or `GameId` is required."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-05",
+    "locale": "en",
+    "translatedFromHash": "24525096cce4af06a0f06bb4085811b5e0fd830549363b171011ed3ffbe37a91",
+    "question": "How can types make illegal game states difficult to represent?",
+    "quickAnswer": "Model the game as a discriminated state machine instead of one object with many nullable fields. Each variant should contain exactly the fields that are valid during that phase.",
+    "conceptualExplanation": "The status discriminant narrows to a phase-specific shape, so transitions must explicitly construct another valid variant.",
+    "productionTradeOff": "Transition and persistence mapping become more verbose, but invalid combinations are rejected earlier and invariants become visible in the model.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Only an `ACTIVE` game has a current player and turn deadline, while a `COMPLETED` game must have a winner."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-06",
+    "locale": "en",
+    "translatedFromHash": "c72da9a8c66316a5553dbd587cbd4bf78eee744c72e0c0dd3338d335651ab073",
+    "question": "Does TypeScript solve concurrency correctness?",
+    "quickAnswer": "No. TypeScript can model commands and versions, but it cannot enforce ordering or atomicity across processes.",
+    "conceptualExplanation": "Real guarantees come from atomic database predicates, transactions, idempotency keys, and broker semantics; types only make the protocol harder to misuse locally.",
+    "productionTradeOff": "Encoding versions in types improves developer feedback, but relying on that representation without runtime enforcement still permits races and lost updates.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "`expectedVersion` is typed, but MongoDB's conditional update is what actually prevents a lost update."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-07",
+    "locale": "en",
+    "translatedFromHash": "d84f0c3c70f184c7364d55c735e02d0cee8f4f24c189388ee2bf67c95700112a",
+    "question": "How should you structure a large TypeScript monorepo?",
+    "quickAnswer": "Define acyclic packages with narrow public APIs and independently testable build boundaries. Shared code should expose deliberate contracts rather than become a dependency dumping ground.",
+    "conceptualExplanation": "Project references or workspace build order emit declarations for applications to consume while dependency rules prevent cycles.",
+    "productionTradeOff": "Too many packages add release and tooling overhead, whereas too few allow coupling and recompilation to spread across the repository.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Domain and contracts are shared packages; the backend, worker, web application, and bot runner are separate consumers."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-08",
+    "locale": "en",
+    "translatedFromHash": "2566da13ff731d6f02eb96ee95db59148ef1945edfa370b9977d996c08415234",
+    "question": "How do you control TypeScript compiler performance?",
+    "quickAnswer": "Measure first, then reduce huge unions, recursive conditional types, duplicate compilation, and unnecessarily broad public surfaces. Use incremental or project builds to avoid rechecking unchanged boundaries.",
+    "conceptualExplanation": "Declaration boundaries and build graphs let a consumer check a package's public contract instead of repeatedly analyzing all of its implementation.",
+    "productionTradeOff": "Simpler types may give up some compile-time precision, but can substantially improve build time, editor latency, and maintainability.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Explicit contracts and a small domain package provide more value than an overly complex type-level program."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-09",
+    "locale": "en",
+    "translatedFromHash": "5e072dae953184b7d98554fe1e02a11f58a6d5273b2ceffe4222316a531a02f0",
+    "question": "What compatibility contract does an exported type create?",
+    "quickAnswer": "An exported type is API surface. Adding a required property or narrowing accepted input can break consumers even when the package's runtime implementation still starts successfully.",
+    "conceptualExplanation": "Declaration files participate in semantic versioning because consumer compilation depends on the assignability relationships they expose.",
+    "productionTradeOff": "Exporting internal types unnecessarily freezes implementation details and makes otherwise local refactors into ecosystem changes.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Only deliberate command, event, and view contracts should leave the shared package."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-10",
+    "locale": "en",
+    "translatedFromHash": "e3c5dbd5b8d4beed055213e7cf09d77a13d51215065d2d79d3e21108270107f7",
+    "question": "What are the risks of decorator metadata?",
+    "quickAnswer": "Decorator metadata enables reflection but introduces runtime coupling and cannot preserve rich TypeScript types. It should not be mistaken for complete runtime validation.",
+    "conceptualExplanation": "Emitted metadata usually records constructor-level types, not union members, generic arguments, or detailed constraints.",
+    "productionTradeOff": "Decorators are convenient for framework integration, but explicit schemas remain necessary and reduce dependence on implicit reflection behavior.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Nest dependency injection uses decorators, while Zod performs detailed payload validation."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-11",
+    "locale": "en",
+    "translatedFromHash": "7e541768a8219fe7c7ed6021c1d99c31f59a4cb6aad3fb47bda60d4ccbd15452",
+    "question": "How do CommonJS and ESM differences affect architecture?",
+    "quickAnswer": "The module format affects resolution, loading, interoperability, top-level features, and package publishing. Shared packages need an explicit output strategy for their actual consumers.",
+    "conceptualExplanation": "CommonJS uses `require`, while ESM uses static imports together with package and module-resolution rules that affect when and how dependencies load.",
+    "productionTradeOff": "Supporting both formats broadens compatibility but can introduce duplicate modules, conditional-export complexity, and confusing default-import behavior.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "The server compiles to CommonJS and the Vite web application uses ESM, so shared package output must be compatible with both consumers."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-12",
+    "locale": "en",
+    "translatedFromHash": "302b933eb3e03e5f201b524a041bc5398c47a2b1a754ce89e2c8bc656100309e",
+    "question": "What is the dual-package hazard?",
+    "quickAnswer": "The dual-package hazard occurs when CommonJS and ESM load two copies of the same package. The process then has separate module identities and potentially separate singleton state.",
+    "conceptualExplanation": "Different resolution paths select different exports, so caches and identity-based comparisons no longer refer to one shared module instance.",
+    "productionTradeOff": "Conditional exports improve compatibility, but require explicit integration tests and careful control of stateful dependencies.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "A stateful infrastructure client must not be instantiated accidentally from two resolved copies of its module."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-13",
+    "locale": "en",
+    "translatedFromHash": "fad727dc7b1ffe70d5868d324409c40ddfd44a9918c4cab45612dcabc400f0a1",
+    "question": "How do you separate domain types from transport types?",
+    "quickAnswer": "A transport DTO represents wire compatibility, while a domain type represents business invariants. An adapter should validate and map between them at the application boundary.",
+    "conceptualExplanation": "The adapter parses a DTO into a domain command and maps the result back to a public view, keeping protocol and framework concerns outside the core model.",
+    "productionTradeOff": "Explicit mapping adds code, but prevents HTTP, Socket.IO, Kafka, persistence, and versioning concerns from contaminating domain rules.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "The pure game package should not depend on Nest, MongoDB, or Socket.IO types."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-14",
+    "locale": "en",
+    "translatedFromHash": "49d83b44a99045694e4a83bfdfd455128ad1cd0a3ad8e7d0df0d10ba975c5f59",
+    "question": "What should compile-time tests verify?",
+    "quickAnswer": "Compile-time tests should verify important public type relationships and expected failures, not the compiler's own implementation details. They protect contracts that runtime tests cannot observe.",
+    "conceptualExplanation": "A type-test file uses assignability assertions or expected-error directives alongside runtime tests for the corresponding behavior.",
+    "productionTradeOff": "Overly detailed type tests are brittle and can obstruct safe refactoring, so test only relationships that consumers intentionally depend on.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Tests can ensure every event has a handler and that private document fields never enter the public room view."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  },
+  {
+    "questionId": "typescript-senior-15",
+    "locale": "en",
+    "translatedFromHash": "c5cc5cde6566a68e8873410875f12990f1ae327eae1c5454d8434b0b3e1f1a72",
+    "question": "How should you migrate a JavaScript service to strict TypeScript?",
+    "quickAnswer": "Migrate by boundary and risk, tightening compiler flags incrementally while prohibiting new unsafe code. Harden external inputs and critical contracts before polishing low-risk internals.",
+    "conceptualExplanation": "Treat external values as `unknown`, add runtime schemas, annotate public APIs, remove `any`, and enable stricter checks in stages with behavioral tests.",
+    "productionTradeOff": "A flag-day rewrite delays value and can hide behavioral regressions; staged migration requires temporary rules and a visible path for removing exceptions.",
+    "appliedExample": {
+      "label": "GameStream",
+      "detail": "Domain contracts and critical persistence commands should be hardened before modules concerned only with UI presentation."
+    },
+    "provenance": {
+      "kind": "ai-translated",
+      "generatedAt": "2026-09-07T00:00:00.000Z",
+      "generator": "OpenAI Codex"
+    },
+    "translationStatus": "ai-translated-needs-review"
+  }
+]

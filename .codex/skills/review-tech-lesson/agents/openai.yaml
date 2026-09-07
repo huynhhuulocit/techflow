@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Tech Lesson"
+  short_description: "Review lesson accuracy and learning quality"
+  default_prompt: "Use $review-tech-lesson to review this technical lesson before publishing."

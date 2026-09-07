@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Visual Lesson"
+  short_description: "Create structured visual technical lessons"
+  default_prompt: "Use $create-visual-lesson to create a visual lesson about JavaScript event loop."

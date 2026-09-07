@@ -1,0 +1,191 @@
+import type { Lesson, Locale } from './types'
+
+const lessonsVi: Lesson[] = [
+  {
+    slug: 'javascript-event-loop',
+    title: 'Event Loop của JavaScript hoạt động thế nào?',
+    shortAnswer: 'Event Loop phối hợp call stack, Web APIs và task queues để JavaScript xử lý bất đồng bộ dù chỉ có một luồng chính.',
+    category: 'JavaScript',
+    difficulty: 'Trung cấp',
+    duration: 12,
+    tags: ['Event loop', 'Async', 'Runtime'],
+    progress: 65,
+    featured: true,
+    workflow: [
+      { id: 'stack', title: 'Chạy mã đồng bộ', actor: 'Call Stack', detail: 'Hàm main và console.log được đưa vào stack rồi thực thi ngay.', color: '#7c5cff' },
+      { id: 'api', title: 'Giao việc bất đồng bộ', actor: 'Web APIs', detail: 'setTimeout được runtime tiếp nhận; call stack không bị chặn.', color: '#14b8a6' },
+      { id: 'queue', title: 'Callback sẵn sàng', actor: 'Task Queue', detail: 'Sau thời gian chờ, callback được đưa vào hàng đợi task.', color: '#f59e0b' },
+      { id: 'loop', title: 'Event Loop điều phối', actor: 'Event Loop', detail: 'Khi stack trống, callback được chuyển vào stack để chạy.', color: '#f43f5e' },
+    ],
+    followUps: ['Microtask khác macrotask thế nào?', 'Promise callback được ưu tiên ở đâu?', 'Điều gì gây block event loop?'],
+    search: { aliases: ['js event loop'], concepts: ['javascript', 'async', 'browser runtime'], relatedSlugs: ['typescript-web-app'] },
+  },
+  {
+    slug: 'database-index',
+    title: 'Database Index tăng tốc truy vấn ra sao?',
+    shortAnswer: 'Index tạo cấu trúc dữ liệu phụ giúp database tìm hàng mà không quét toàn bảng, đổi lại tốn bộ nhớ và chi phí ghi.',
+    category: 'Database', difficulty: 'Trung cấp', duration: 14, tags: ['SQL', 'B-tree'], progress: 20,
+    workflow: [], followUps: [],
+    search: { aliases: ['sql index'], concepts: ['database', 'index', 'query performance'], relatedSlugs: [] },
+  },
+  {
+    slug: 'jwt-session',
+    title: 'JWT và Session khác nhau như thế nào?',
+    shortAnswer: 'Session lưu trạng thái phía server; JWT đóng gói claim trong token và thường giảm nhu cầu tra cứu trạng thái.',
+    category: 'Backend', difficulty: 'Cơ bản', duration: 10, tags: ['Auth', 'Security'], progress: 0,
+    workflow: [], followUps: [],
+    search: { aliases: ['token session'], concepts: ['authentication', 'jwt', 'session'], relatedSlugs: [] },
+  },
+  {
+    slug: 'message-queue',
+    title: 'Khi nào hệ thống cần Message Queue?',
+    shortAnswer: 'Queue tách producer khỏi consumer, hấp thụ tải đột biến và cho phép retry các công việc bất đồng bộ.',
+    category: 'System Design', difficulty: 'Nâng cao', duration: 18, tags: ['Queue', 'Scale'], progress: 0,
+    workflow: [], followUps: [],
+    search: { aliases: ['mq'], concepts: ['message queue', 'async', 'scalability'], relatedSlugs: ['load-balancer'] },
+  },
+  {
+    slug: 'rag-workflow',
+    title: 'Một hệ thống RAG xử lý câu hỏi ra sao?',
+    shortAnswer: 'RAG tìm các đoạn dữ liệu liên quan rồi đưa chúng vào ngữ cảnh để mô hình tạo câu trả lời có căn cứ.',
+    category: 'AI Engineer', difficulty: 'Trung cấp', duration: 16, tags: ['RAG', 'Vector DB'], progress: 0,
+    workflow: [], followUps: [],
+    search: { aliases: ['retrieval augmented generation'], concepts: ['rag', 'embedding', 'vector database'], relatedSlugs: [] },
+  },
+  {
+    slug: 'load-balancer',
+    title: 'Load Balancer phân phối request thế nào?',
+    shortAnswer: 'Load balancer định tuyến request đến nhiều server dựa trên thuật toán và tình trạng sức khỏe của từng node.',
+    category: 'System Design', difficulty: 'Cơ bản', duration: 11, tags: ['Scale', 'Reliability'], progress: 0,
+    workflow: [], followUps: [],
+    search: { aliases: ['cân bằng tải'], concepts: ['load balancer', 'scalability', 'reliability'], relatedSlugs: ['message-queue'] },
+  },
+  {
+    slug: 'sfcc-composable-storefront',
+    title: 'SFCC Composable Storefront kết nối frontend như thế nào?',
+    shortAnswer: 'Salesforce B2C Commerce cung cấp dữ liệu và nghiệp vụ commerce qua SCAPI; storefront React chạy trên Managed Runtime gọi các API đó để render trải nghiệm mua sắm.',
+    category: 'SFCC', difficulty: 'Nâng cao', duration: 18, tags: ['SFCC', 'SCAPI', 'Headless'], progress: 0,
+    workflow: [],
+    followUps: ['SFRA và Composable Storefront khác nhau thế nào?', 'Managed Runtime đảm nhận những gì?', 'SCAPI được gọi từ server hay browser?'],
+    search: { aliases: ['salesforce commerce cloud', 'b2c commerce', 'commerce cloud'], concepts: ['sfcc', 'commerce backend', 'headless commerce', 'scapi'], relatedSlugs: ['pwa-kit-architecture', 'typescript-web-app'] },
+  },
+  {
+    slug: 'pwa-kit-architecture',
+    title: 'PWA Kit hoạt động trong kiến trúc SFCC ra sao?',
+    shortAnswer: 'PWA Kit là framework React cho storefront composable, hỗ trợ JavaScript hoặc TypeScript, SSR và hydration; ứng dụng lấy dữ liệu commerce từ Salesforce B2C Commerce qua API.',
+    category: 'SFCC', difficulty: 'Trung cấp', duration: 16, tags: ['PWA Kit', 'React', 'SSR'], progress: 0,
+    workflow: [],
+    followUps: ['PWA Kit có giống PWA web thông thường không?', 'SSR và hydration phối hợp ra sao?', 'Storefront giao tiếp với SFCC bằng API nào?'],
+    search: { aliases: ['pwa', 'progressive web app', 'salesforce pwa kit'], concepts: ['pwa', 'pwa kit', 'react storefront', 'ssr', 'service worker'], relatedSlugs: ['sfcc-composable-storefront', 'typescript-web-app'] },
+  },
+  {
+    slug: 'typescript-web-app',
+    title: 'TypeScript mang lại gì cho ứng dụng PWA?',
+    shortAnswer: 'TypeScript bổ sung kiểm tra kiểu tĩnh cho JavaScript, giúp mô hình hóa dữ liệu API, component props và trạng thái ứng dụng rõ ràng hơn trước khi chạy.',
+    category: 'TypeScript', difficulty: 'Cơ bản', duration: 12, tags: ['TypeScript', 'PWA', 'Type Safety'], progress: 0,
+    workflow: [],
+    followUps: ['TypeScript có chạy trực tiếp trong browser không?', 'Nên tạo type cho SCAPI response thế nào?', 'Type inference khác explicit type ra sao?'],
+    search: { aliases: ['ts', 'typed javascript'], concepts: ['typescript', 'type safety', 'frontend', 'pwa'], relatedSlugs: ['pwa-kit-architecture', 'sfcc-composable-storefront'] },
+  },
+]
+
+const lessonsEn: Lesson[] = [
+  {
+    slug: 'javascript-event-loop',
+    title: 'How does the JavaScript Event Loop work?',
+    shortAnswer: 'The Event Loop coordinates the call stack, Web APIs, and task queues so JavaScript can handle asynchronous work while keeping a single main thread.',
+    category: 'JavaScript',
+    difficulty: 'Trung cấp',
+    duration: 12,
+    tags: ['Event loop', 'Async', 'Runtime'],
+    progress: 65,
+    featured: true,
+    workflow: [
+      { id: 'stack', title: 'Run synchronous code', actor: 'Call Stack', detail: 'The main function and console.log enter the stack and execute immediately.', color: '#7c5cff' },
+      { id: 'api', title: 'Hand off asynchronous work', actor: 'Web APIs', detail: 'The runtime receives setTimeout without blocking the call stack.', color: '#14b8a6' },
+      { id: 'queue', title: 'Make the callback ready', actor: 'Task Queue', detail: 'After the timer expires, the callback enters the task queue.', color: '#f59e0b' },
+      { id: 'loop', title: 'Schedule the callback', actor: 'Event Loop', detail: 'When the stack is empty, the Event Loop moves the callback onto the stack to run.', color: '#f43f5e' },
+    ],
+    followUps: ['How do microtasks differ from macrotasks?', 'Where are Promise callbacks prioritized?', 'What can block the Event Loop?'],
+    search: { aliases: ['js event loop'], concepts: ['javascript', 'async', 'browser runtime'], relatedSlugs: ['typescript-web-app'] },
+  },
+  {
+    slug: 'database-index',
+    title: 'How does a Database Index speed up queries?',
+    shortAnswer: 'An index creates an auxiliary data structure that lets the database find rows without scanning the entire table, at the cost of storage and additional write work.',
+    category: 'Database', difficulty: 'Trung cấp', duration: 14, tags: ['SQL', 'B-tree'], progress: 20,
+    workflow: [], followUps: [],
+    search: { aliases: ['sql index'], concepts: ['database', 'index', 'query performance'], relatedSlugs: [] },
+  },
+  {
+    slug: 'jwt-session',
+    title: 'How are JWT and Session authentication different?',
+    shortAnswer: 'A session keeps authentication state on the server. A JWT packages claims into a signed token and can reduce state lookups, but revocation and token handling require deliberate design.',
+    category: 'Backend', difficulty: 'Cơ bản', duration: 10, tags: ['Auth', 'Security'], progress: 0,
+    workflow: [], followUps: [],
+    search: { aliases: ['token session'], concepts: ['authentication', 'jwt', 'session'], relatedSlugs: [] },
+  },
+  {
+    slug: 'message-queue',
+    title: 'When does a system need a Message Queue?',
+    shortAnswer: 'A queue decouples producers from consumers, absorbs traffic spikes, and enables retries for asynchronous work.',
+    category: 'System Design', difficulty: 'Nâng cao', duration: 18, tags: ['Queue', 'Scale'], progress: 0,
+    workflow: [], followUps: [],
+    search: { aliases: ['mq'], concepts: ['message queue', 'async', 'scalability'], relatedSlugs: ['load-balancer'] },
+  },
+  {
+    slug: 'rag-workflow',
+    title: 'How does a RAG system answer a question?',
+    shortAnswer: 'RAG retrieves relevant passages and places them in the model context so the generated answer can be grounded in source material.',
+    category: 'AI Engineer', difficulty: 'Trung cấp', duration: 16, tags: ['RAG', 'Vector DB'], progress: 0,
+    workflow: [], followUps: [],
+    search: { aliases: ['retrieval augmented generation'], concepts: ['rag', 'embedding', 'vector database'], relatedSlugs: [] },
+  },
+  {
+    slug: 'load-balancer',
+    title: 'How does a Load Balancer distribute requests?',
+    shortAnswer: 'A load balancer routes requests across multiple servers based on a balancing algorithm and the health of each node.',
+    category: 'System Design', difficulty: 'Cơ bản', duration: 11, tags: ['Scale', 'Reliability'], progress: 0,
+    workflow: [], followUps: [],
+    search: { aliases: ['traffic distribution'], concepts: ['load balancer', 'scalability', 'reliability'], relatedSlugs: ['message-queue'] },
+  },
+  {
+    slug: 'sfcc-composable-storefront',
+    title: 'How does an SFCC Composable Storefront connect to its frontend?',
+    shortAnswer: 'Salesforce B2C Commerce exposes commerce data and operations through SCAPI. A React storefront running on Managed Runtime calls those APIs to render the shopping experience.',
+    category: 'SFCC', difficulty: 'Nâng cao', duration: 18, tags: ['SFCC', 'SCAPI', 'Headless'], progress: 0,
+    workflow: [],
+    followUps: ['How do SFRA and Composable Storefront differ?', 'What does Managed Runtime provide?', 'Should the storefront call SCAPI from the server or browser?'],
+    search: { aliases: ['salesforce commerce cloud', 'b2c commerce', 'commerce cloud'], concepts: ['sfcc', 'commerce backend', 'headless commerce', 'scapi'], relatedSlugs: ['pwa-kit-architecture', 'typescript-web-app'] },
+  },
+  {
+    slug: 'pwa-kit-architecture',
+    title: 'How does PWA Kit fit into an SFCC architecture?',
+    shortAnswer: 'PWA Kit is a React framework for composable storefronts with JavaScript or TypeScript, SSR, and hydration. The application gets commerce data from Salesforce B2C Commerce through APIs.',
+    category: 'SFCC', difficulty: 'Trung cấp', duration: 16, tags: ['PWA Kit', 'React', 'SSR'], progress: 0,
+    workflow: [],
+    followUps: ['Is PWA Kit the same as a conventional Progressive Web App?', 'How do SSR and hydration work together?', 'Which APIs connect the storefront to SFCC?'],
+    search: { aliases: ['pwa', 'progressive web app', 'salesforce pwa kit'], concepts: ['pwa', 'pwa kit', 'react storefront', 'ssr', 'service worker'], relatedSlugs: ['sfcc-composable-storefront', 'typescript-web-app'] },
+  },
+  {
+    slug: 'typescript-web-app',
+    title: 'What does TypeScript add to a PWA application?',
+    shortAnswer: 'TypeScript adds static type checking to JavaScript, making API data, component props, and application state more explicit before the code runs.',
+    category: 'TypeScript', difficulty: 'Cơ bản', duration: 12, tags: ['TypeScript', 'PWA', 'Type Safety'], progress: 0,
+    workflow: [],
+    followUps: ['Does TypeScript run directly in the browser?', 'How should SCAPI response types be modeled?', 'How does type inference differ from an explicit type?'],
+    search: { aliases: ['ts', 'typed javascript'], concepts: ['typescript', 'type safety', 'frontend', 'pwa'], relatedSlugs: ['pwa-kit-architecture', 'sfcc-composable-storefront'] },
+  },
+]
+
+export const lessonsByLocale: Record<Locale, Lesson[]> = {
+  vi: lessonsVi,
+  en: lessonsEn,
+}
+
+/** Vietnamese lessons remain the default for existing import and test callers. */
+export const lessons = lessonsVi
+
+export function getLessons(locale: Locale) {
+  return lessonsByLocale[locale]
+}

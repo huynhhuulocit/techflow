@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Tech Simulation"
+  short_description: "Design interactive technical workflow simulations"
+  default_prompt: "Use $design-tech-simulation to design an interactive load balancer simulation."
