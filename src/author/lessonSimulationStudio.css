@@ -1,0 +1,388 @@
+.lesson-simulation-studio {
+  --studio-line: #35435a;
+  --studio-surface: #101927;
+  --studio-raised: #151f30;
+  --studio-text: #e7edf7;
+  --studio-muted: #929fb2;
+  width: 100%;
+  min-width: 0;
+  margin: 30px 0 20px;
+  border: 1px solid #40366d;
+  border-radius: 15px;
+  color: var(--studio-text);
+  background: linear-gradient(145deg, rgba(29, 25, 57, .88), rgba(13, 22, 35, .96));
+}
+
+.lesson-simulation-studio button,
+.lesson-simulation-studio input,
+.lesson-simulation-studio select,
+.lesson-simulation-studio textarea {
+  font: inherit;
+}
+
+.lesson-simulation-studio button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 13px;
+  border: 1px solid var(--studio-line);
+  border-radius: 9px;
+  color: #d7deea;
+  background: #152032;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.lesson-simulation-studio button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.lesson-simulation-studio button:focus-visible,
+.lesson-simulation-studio input:focus-visible,
+.lesson-simulation-studio select:focus-visible,
+.lesson-simulation-studio textarea:focus-visible,
+.lesson-simulation-studio h3:focus-visible {
+  outline: 3px solid rgba(174, 155, 255, .75);
+  outline-offset: 3px;
+}
+
+.lesson-simulation-studio__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 17px 18px;
+}
+
+.lesson-simulation-studio__toolbar > div:first-child {
+  min-width: 0;
+}
+
+.lesson-simulation-studio__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ad9af6;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .13em;
+}
+
+.lesson-simulation-studio__toolbar h2 {
+  margin: 5px 0 3px;
+  color: #f2f5fa;
+  font: 750 17px/1.35 Manrope, sans-serif;
+}
+
+.lesson-simulation-studio__toolbar p,
+.lesson-simulation-studio__preview header p {
+  margin: 0;
+  color: var(--studio-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.lesson-simulation-studio__toolbar-actions,
+.lesson-simulation-studio__preview-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.lesson-simulation-studio .lesson-simulation-studio__primary {
+  border-color: #7861db;
+  color: #fff;
+  background: #644ec7;
+}
+
+.lesson-simulation-studio .lesson-simulation-studio__primary:hover:not(:disabled) {
+  background: #715adb;
+}
+
+.lesson-simulation-studio .lesson-simulation-studio__secondary:hover:not(:disabled),
+.lesson-simulation-studio .lesson-simulation-studio__quiet:hover:not(:disabled) {
+  border-color: #6a59b5;
+  color: #fff;
+}
+
+.lesson-simulation-studio .lesson-simulation-studio__quiet {
+  border-color: transparent;
+  background: transparent;
+}
+
+.lesson-simulation-studio .lesson-simulation-studio__danger {
+  color: #f2a8b1;
+}
+
+.lesson-simulation-studio__panel {
+  min-width: 0;
+  padding: 21px;
+  border-top: 1px solid #342c5c;
+  background: rgba(8, 14, 25, .48);
+}
+
+.lesson-simulation-studio__intro {
+  margin: 0;
+  color: #b8c1cf;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.lesson-simulation-studio__disclosure {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 15px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #66562e;
+  border-radius: 10px;
+  color: #e3c886;
+  background: #241e12;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.lesson-simulation-studio__disclosure svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.lesson-simulation-studio__token-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  gap: 9px;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.lesson-simulation-studio label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+  color: #b7c1d0;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lesson-simulation-studio input,
+.lesson-simulation-studio select,
+.lesson-simulation-studio textarea {
+  width: 100%;
+  max-width: 100%;
+  border: 1px solid var(--studio-line);
+  border-radius: 9px;
+  color: #e9eef7;
+  background: #0a1320;
+}
+
+.lesson-simulation-studio input,
+.lesson-simulation-studio select {
+  min-height: 44px;
+  padding: 9px 11px;
+}
+
+.lesson-simulation-studio textarea {
+  min-height: 88px;
+  padding: 11px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.lesson-simulation-studio__settings {
+  display: grid;
+  grid-template-columns: minmax(150px, .35fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin-top: 17px;
+}
+
+.lesson-simulation-studio__generate {
+  margin-top: 14px;
+}
+
+.lesson-simulation-studio__notice {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid #405a85;
+  border-radius: 10px;
+  color: #bdd4fa;
+  background: #132139;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.lesson-simulation-studio__notice p {
+  margin: 0;
+}
+
+.lesson-simulation-studio__notice ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  overflow-wrap: anywhere;
+}
+
+.lesson-simulation-studio__notice--success {
+  border-color: #276b60;
+  color: #a8eee0;
+  background: #102a27;
+}
+
+.lesson-simulation-studio__notice--warning {
+  border-color: #66562e;
+  color: #efd79b;
+  background: #251f12;
+}
+
+.lesson-simulation-studio__notice--error {
+  border-color: #874657;
+  color: #ffc0ca;
+  background: #301721;
+}
+
+.lesson-simulation-studio__preview {
+  min-width: 0;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #334057;
+}
+
+.lesson-simulation-studio__stale {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 11px;
+  margin-top: 17px;
+  padding: 14px;
+  border: 1px solid #765b2f;
+  border-radius: 10px;
+  color: #e6c77e;
+  background: #281f12;
+}
+
+.lesson-simulation-studio__stale > svg {
+  margin-top: 2px;
+}
+
+.lesson-simulation-studio__stale h3 {
+  margin: 0;
+  color: #f0d497;
+  font-size: 13px;
+}
+
+.lesson-simulation-studio__stale p {
+  margin: 5px 0 10px;
+  color: #bdaa7e;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.lesson-simulation-studio__stale > div > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lesson-simulation-studio__preview > header span {
+  color: #d7b46f;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .11em;
+}
+
+.lesson-simulation-studio__preview > header h3 {
+  margin: 7px 0 4px;
+  color: #f1f4f9;
+  font: 750 19px/1.4 Manrope, sans-serif;
+}
+
+.lesson-simulation-studio__preview .simulation-player {
+  width: 100%;
+  margin: 17px 0;
+  box-shadow: none;
+}
+
+@media (max-width: 680px) {
+  .lesson-simulation-studio__toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .lesson-simulation-studio__toolbar-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-simulation-studio__toolbar-actions button {
+    width: 100%;
+  }
+
+  .lesson-simulation-studio__panel {
+    padding: 17px;
+  }
+
+  .lesson-simulation-studio__token-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lesson-simulation-studio__token-row label {
+    grid-column: 1 / -1;
+  }
+
+  .lesson-simulation-studio__settings {
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-simulation-studio__preview-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lesson-simulation-studio__stale > div > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lesson-simulation-studio__preview-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .lesson-simulation-studio {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .lesson-simulation-studio__panel,
+  .lesson-simulation-studio__toolbar {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .lesson-simulation-studio__token-row,
+  .lesson-simulation-studio__preview-actions,
+  .lesson-simulation-studio__stale > div > div {
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-simulation-studio__token-row button,
+  .lesson-simulation-studio__generate {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lesson-simulation-studio *,
+  .lesson-simulation-studio *::before,
+  .lesson-simulation-studio *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}

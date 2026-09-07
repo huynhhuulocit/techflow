@@ -246,6 +246,12 @@ export function validateQuestionDraft(input: unknown): DraftValidationResult {
     const simulation = validateSimulationSpec(input.simulation)
     if (!simulation.success) {
       simulation.issues.forEach(entry => issue(issues, `draft.${entry.path}`, entry.message))
+    } else if (simulation.data.schemaVersion !== 1) {
+      issue(
+        issues,
+        'draft.simulation.schemaVersion',
+        'Question Studio chỉ chấp nhận question-bound simulation schemaVersion 1.',
+      )
     } else if (simulation.data.status !== 'generated-needs-review') {
       issue(
         issues,

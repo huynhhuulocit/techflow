@@ -2,15 +2,20 @@ import OpenAI from 'openai'
 import { zodTextFormat } from 'openai/helpers/zod'
 import {
   GeneratedQuestionBatchSchema,
+  GeneratedLessonSimulationSchema,
   GeneratedSimulationSchema,
+  type GeneratedLessonSimulation,
   type GeneratedQuestionBatch,
   type GeneratedSimulation,
+  type LessonSimulationGenerateRequest,
   type QuestionGenerateRequest,
   type SimulationGenerateRequest,
 } from './schemas.ts'
 import {
   buildQuestionInput,
   buildQuestionInstructions,
+  buildLessonSimulationInput,
+  buildLessonSimulationInstructions,
   buildSimulationInput,
   buildSimulationInstructions,
 } from './prompts.ts'
@@ -96,6 +101,31 @@ export async function generateSimulation(
       store: false,
       max_output_tokens: 6_000,
       text: { format: zodTextFormat(GeneratedSimulationSchema, 'techflow_simulation_v1') },
+    })
+
+    if (response.status !== 'completed' || !response.output_parsed) {
+      throw new AiUpstreamError('The AI response was incomplete or refused.', 'invalid_output')
+    }
+
+    return { output: response.output_parsed, responseId: response.id }
+  } catch (error) {
+    mapUpstreamError(error)
+  }
+}
+
+export async function generateLessonSimulation(
+  config: OpenAiConfig,
+  input: LessonSimulationGenerateRequest,
+  client: ResponsesClient = createClient(config),
+): Promise<{ output: GeneratedLessonSimulation; responseId: string }> {
+  try {
+    const response = await client.responses.parse({
+      model: config.model,
+      instructions: buildLessonSimulationInstructions(input.source.locale),
+      input: buildLessonSimulationInput(input),
+      store: false,
+      max_output_tokens: 8_000,
+      text: { format: zodTextFormat(GeneratedLessonSimulationSchema, 'techflow_lesson_simulation_v2') },
     })
 
     if (response.status !== 'completed' || !response.output_parsed) {

@@ -1,10 +1,13 @@
 import type {
   InterviewReviewMetadata,
+  LessonSimulationSpec,
+  QuestionSimulationSpec,
   SimulationActor,
   SimulationInvariant,
   SimulationScalar,
   SimulationScenario,
   SimulationSpec,
+  SimulationStateField,
   SimulationTransition,
 } from '../content/types.ts'
 
@@ -13,8 +16,8 @@ export type SimulationValidationIssue = {
   message: string
 }
 
-export type SimulationValidationResult =
-  | { success: true; data: SimulationSpec; issues: [] }
+export type SimulationValidationResult<T extends SimulationSpec = SimulationSpec> =
+  | { success: true; data: T; issues: [] }
   | { success: false; issues: SimulationValidationIssue[] }
 
 const HASH_PATTERN = /^[a-f0-9]{64}$/u
@@ -33,7 +36,7 @@ const SHA256_CONSTANTS = [
   0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 ] as const
 
-const ROOT_KEYS = [
+const QUESTION_ROOT_KEYS = [
   'schemaVersion',
   'id',
   'sourceQuestionId',
@@ -48,6 +51,24 @@ const ROOT_KEYS = [
   'invariants',
   'status',
   'generation',
+  'review',
+] as const
+
+const LESSON_ROOT_KEYS = [
+  'schemaVersion',
+  'id',
+  'source',
+  'locale',
+  'kind',
+  'learningObjective',
+  'misconception',
+  'takeaway',
+  'actors',
+  'stateFields',
+  'scenarios',
+  'invariants',
+  'status',
+  'provenance',
   'review',
 ] as const
 
@@ -200,57 +221,104 @@ function canonicalSnapshot(value: Record<string, SimulationScalar>) {
  * invariant order affects the lesson. Snapshot keys are sorted because object
  * insertion order does not. `status` and `review` are deliberately excluded so
  * applying review metadata does not invalidate the content being attested to.
- * Every other schema field, including source binding and generation provenance,
+ * Every other schema field, including source binding and authored/AI provenance,
  * is serialized in an explicit order. Missing response IDs are encoded as null.
  */
 export function canonicalSimulationReviewContent(spec: SimulationSpec) {
+  const actors = spec.actors.map((entry) => ({
+    id: entry.id,
+    label: entry.label,
+    role: entry.role,
+    iconToken: entry.iconToken,
+  }))
+  const scenarios = spec.scenarios.map((entry) => ({
+    id: entry.id,
+    label: entry.label,
+    kind: entry.kind,
+    initialSnapshot: canonicalSnapshot(entry.initialSnapshot),
+    transitions: entry.transitions.map((transitionEntry) => ({
+      id: transitionEntry.id,
+      actorId: transitionEntry.actorId,
+      event: transitionEntry.event,
+      explanation: transitionEntry.explanation,
+      snapshot: canonicalSnapshot(transitionEntry.snapshot),
+      highlights: [...transitionEntry.highlights],
+    })),
+    terminalState: entry.terminalState,
+    terminalSummary: entry.terminalSummary,
+  }))
+  const invariants = spec.invariants.map((entry) => ({
+    id: entry.id,
+    label: entry.label,
+    stateKey: entry.stateKey,
+    operator: entry.operator,
+    expected: entry.expected,
+  }))
+
+  if (spec.schemaVersion === 1) {
+    return JSON.stringify({
+      schemaVersion: spec.schemaVersion,
+      id: spec.id,
+      sourceQuestionId: spec.sourceQuestionId,
+      sourceContentHash: spec.sourceContentHash,
+      locale: spec.locale,
+      kind: spec.kind,
+      learningObjective: spec.learningObjective,
+      misconception: spec.misconception,
+      takeaway: spec.takeaway,
+      actors,
+      scenarios,
+      invariants,
+      generation: {
+        model: spec.generation.model,
+        promptVersion: spec.generation.promptVersion,
+        generatedAt: spec.generation.generatedAt,
+        responseId: spec.generation.responseId ?? null,
+        inputHash: spec.generation.inputHash,
+      },
+    })
+  }
+
   return JSON.stringify({
     schemaVersion: spec.schemaVersion,
     id: spec.id,
-    sourceQuestionId: spec.sourceQuestionId,
-    sourceContentHash: spec.sourceContentHash,
+    source: {
+      kind: spec.source.kind,
+      slug: spec.source.slug,
+      contentHash: spec.source.contentHash,
+    },
     locale: spec.locale,
     kind: spec.kind,
     learningObjective: spec.learningObjective,
     misconception: spec.misconception,
     takeaway: spec.takeaway,
-    actors: spec.actors.map((entry) => ({
-      id: entry.id,
+    actors,
+    stateFields: spec.stateFields.map((entry) => ({
+      key: entry.key,
       label: entry.label,
-      role: entry.role,
-      iconToken: entry.iconToken,
+      description: entry.description,
     })),
-    scenarios: spec.scenarios.map((entry) => ({
-      id: entry.id,
-      label: entry.label,
-      kind: entry.kind,
-      initialSnapshot: canonicalSnapshot(entry.initialSnapshot),
-      transitions: entry.transitions.map((transitionEntry) => ({
-        id: transitionEntry.id,
-        actorId: transitionEntry.actorId,
-        event: transitionEntry.event,
-        explanation: transitionEntry.explanation,
-        snapshot: canonicalSnapshot(transitionEntry.snapshot),
-        highlights: [...transitionEntry.highlights],
-      })),
-      terminalState: entry.terminalState,
-      terminalSummary: entry.terminalSummary,
-    })),
-    invariants: spec.invariants.map((entry) => ({
-      id: entry.id,
-      label: entry.label,
-      stateKey: entry.stateKey,
-      operator: entry.operator,
-      expected: entry.expected,
-    })),
-    generation: {
-      model: spec.generation.model,
-      promptVersion: spec.generation.promptVersion,
-      generatedAt: spec.generation.generatedAt,
-      responseId: spec.generation.responseId ?? null,
-      inputHash: spec.generation.inputHash,
-    },
+    scenarios,
+    invariants,
+    provenance: spec.provenance.kind === 'authored'
+      ? {
+          kind: spec.provenance.kind,
+          author: spec.provenance.author,
+          createdAt: spec.provenance.createdAt,
+        }
+      : {
+          kind: spec.provenance.kind,
+          model: spec.provenance.model,
+          promptVersion: spec.provenance.promptVersion,
+          generatedAt: spec.provenance.generatedAt,
+          responseId: spec.provenance.responseId ?? null,
+          inputHash: spec.provenance.inputHash,
+        },
   })
+}
+
+export function simulationSourceContentHash(spec: SimulationSpec) {
+  return spec.schemaVersion === 1 ? spec.sourceContentHash : spec.source.contentHash
 }
 
 export function simulationReviewHash(spec: SimulationSpec) {
@@ -472,6 +540,58 @@ function invariant(
   return value as unknown as SimulationInvariant
 }
 
+function stateField(
+  value: unknown,
+  index: number,
+  issues: SimulationValidationIssue[],
+): SimulationStateField | undefined {
+  const path = `simulation.stateFields[${index}]`
+  if (!isObject(value)) {
+    addIssue(issues, path, 'State field phải là object.')
+    return undefined
+  }
+  exactKeys(value, ['key', 'label', 'description'], ['key', 'label', 'description'], path, issues)
+  if (typeof value.key !== 'string' || !STATE_KEY_PATTERN.test(value.key)) {
+    addIssue(issues, `${path}.key`, 'State field key không đúng định dạng an toàn.')
+  }
+  text(value.label, `${path}.label`, issues, { max: 100 })
+  text(value.description, `${path}.description`, issues, { max: 300 })
+  return value as unknown as SimulationStateField
+}
+
+function validIsoTimestamp(value: unknown, path: string, issues: SimulationValidationIssue[]) {
+  if (!text(value, path, issues, { max: 40 })
+    || !ISO_DATE_PATTERN.test(String(value))
+    || Number.isNaN(Date.parse(String(value)))) {
+    addIssue(issues, path, 'Phải là ISO UTC timestamp hợp lệ.')
+    return false
+  }
+  return true
+}
+
+function generationMetadata(
+  value: Record<string, unknown>,
+  path: string,
+  issues: SimulationValidationIssue[],
+  includeKind = false,
+) {
+  const allowed = includeKind
+    ? ['kind', 'model', 'promptVersion', 'generatedAt', 'responseId', 'inputHash']
+    : ['model', 'promptVersion', 'generatedAt', 'responseId', 'inputHash']
+  const required = includeKind
+    ? ['kind', 'model', 'promptVersion', 'generatedAt', 'inputHash']
+    : ['model', 'promptVersion', 'generatedAt', 'inputHash']
+  exactKeys(value, allowed, required, path, issues)
+  if (includeKind && value.kind !== 'ai-generated') {
+    addIssue(issues, `${path}.kind`, 'AI provenance kind phải là ai-generated.')
+  }
+  text(value.model, `${path}.model`, issues, { max: 120 })
+  text(value.promptVersion, `${path}.promptVersion`, issues, { max: 80 })
+  validIsoTimestamp(value.generatedAt, `${path}.generatedAt`, issues)
+  if (value.responseId !== undefined) id(value.responseId, `${path}.responseId`, issues)
+  hash(value.inputHash, `${path}.inputHash`, issues)
+}
+
 function reviewMetadata(
   value: unknown,
   path: string,
@@ -512,24 +632,54 @@ function reviewMetadata(
   return value as unknown as InterviewReviewMetadata
 }
 
+export function validateSimulationSpec(input: QuestionSimulationSpec): SimulationValidationResult<QuestionSimulationSpec>
+export function validateSimulationSpec(input: LessonSimulationSpec): SimulationValidationResult<LessonSimulationSpec>
+export function validateSimulationSpec(input: SimulationSpec): SimulationValidationResult
+export function validateSimulationSpec(input: unknown): SimulationValidationResult
 export function validateSimulationSpec(input: unknown): SimulationValidationResult {
   const issues: SimulationValidationIssue[] = []
   if (!isObject(input)) {
     return { success: false, issues: [{ path: 'simulation', message: 'Simulation phải là object.' }] }
   }
 
-  exactKeys(
-    input,
-    ROOT_KEYS,
-    ROOT_KEYS.filter((key) => key !== 'review'),
-    'simulation',
-    issues,
-  )
+  const isQuestionSpec = input.schemaVersion === 1
+  const isLessonSpec = input.schemaVersion === 2
+  if (isQuestionSpec) {
+    exactKeys(
+      input,
+      QUESTION_ROOT_KEYS,
+      QUESTION_ROOT_KEYS.filter((key) => key !== 'review'),
+      'simulation',
+      issues,
+    )
+  } else if (isLessonSpec) {
+    exactKeys(
+      input,
+      LESSON_ROOT_KEYS,
+      LESSON_ROOT_KEYS.filter((key) => key !== 'review'),
+      'simulation',
+      issues,
+    )
+  } else {
+    addIssue(issues, 'simulation.schemaVersion', 'Chỉ hỗ trợ schemaVersion 1 hoặc 2.')
+  }
 
-  if (input.schemaVersion !== 1) addIssue(issues, 'simulation.schemaVersion', 'Chỉ hỗ trợ schemaVersion 1.')
   id(input.id, 'simulation.id', issues)
-  id(input.sourceQuestionId, 'simulation.sourceQuestionId', issues)
-  hash(input.sourceContentHash, 'simulation.sourceContentHash', issues)
+  if (isQuestionSpec) {
+    id(input.sourceQuestionId, 'simulation.sourceQuestionId', issues)
+    hash(input.sourceContentHash, 'simulation.sourceContentHash', issues)
+  } else if (isLessonSpec) {
+    if (!isObject(input.source)) {
+      addIssue(issues, 'simulation.source', 'Lesson simulation source phải là object.')
+    } else {
+      exactKeys(input.source, ['kind', 'slug', 'contentHash'], ['kind', 'slug', 'contentHash'], 'simulation.source', issues)
+      if (input.source.kind !== 'lesson') {
+        addIssue(issues, 'simulation.source.kind', 'Lesson simulation source kind phải là lesson.')
+      }
+      id(input.source.slug, 'simulation.source.slug', issues)
+      hash(input.source.contentHash, 'simulation.source.contentHash', issues)
+    }
+  }
   if (!['vi', 'en'].includes(String(input.locale))) addIssue(issues, 'simulation.locale', 'Locale phải là vi hoặc en.')
   if (!['sequence', 'flow', 'state'].includes(String(input.kind))) addIssue(issues, 'simulation.kind', 'Simulation kind không hợp lệ.')
   text(input.learningObjective, 'simulation.learningObjective', issues, { max: 500 })
@@ -576,6 +726,49 @@ export function validateSimulationSpec(input: unknown): SimulationValidationResu
       scenarios.every((entry) => Object.prototype.hasOwnProperty.call(entry.initialSnapshot ?? {}, key))
     )))
     : new Set<string>()
+
+  if (isLessonSpec) {
+    const referenceStateKeys = scenarios.length > 0
+      ? new Set(Object.keys(scenarios[0].initialSnapshot ?? {}))
+      : new Set<string>()
+    scenarios.forEach((entry, scenarioIndex) => {
+      const scenarioStateKeys = new Set(Object.keys(entry.initialSnapshot ?? {}))
+      if (scenarioStateKeys.size !== referenceStateKeys.size
+        || [...referenceStateKeys].some((key) => !scenarioStateKeys.has(key))) {
+        addIssue(
+          issues,
+          `simulation.scenarios[${scenarioIndex}].initialSnapshot`,
+          'Mọi lesson scenario phải dùng cùng một tập state keys.',
+        )
+      }
+    })
+
+    const fieldKeys = new Set<string>()
+    if (!Array.isArray(input.stateFields)) {
+      addIssue(issues, 'simulation.stateFields', 'Lesson simulation cần state field metadata.')
+    } else {
+      if (input.stateFields.length < 1 || input.stateFields.length > 24) {
+        addIssue(issues, 'simulation.stateFields', 'Lesson simulation cần 1 đến 24 state fields.')
+      }
+      input.stateFields.forEach((entry, index) => {
+        const parsed = stateField(entry, index, issues)
+        if (!parsed) return
+        if (fieldKeys.has(parsed.key)) {
+          addIssue(issues, `simulation.stateFields[${index}].key`, 'State field key bị trùng.')
+        }
+        fieldKeys.add(parsed.key)
+      })
+      if (fieldKeys.size !== referenceStateKeys.size
+        || [...referenceStateKeys].some((key) => !fieldKeys.has(key))) {
+        addIssue(
+          issues,
+          'simulation.stateFields',
+          'State field metadata phải mô tả đúng mọi snapshot key.',
+        )
+      }
+    }
+  }
+
   const invariantIds = new Set<string>()
   const invariants: SimulationInvariant[] = []
   if (!Array.isArray(input.invariants)) {
@@ -593,49 +786,74 @@ export function validateSimulationSpec(input: unknown): SimulationValidationResu
     })
   }
 
-  if (!['generated-needs-review', 'reviewed'].includes(String(input.status))) {
+  const allowedStatuses = isLessonSpec
+    ? ['draft-needs-review', 'generated-needs-review', 'reviewed']
+    : ['generated-needs-review', 'reviewed']
+  if (!allowedStatuses.includes(String(input.status))) {
     addIssue(issues, 'simulation.status', 'Review status không hợp lệ.')
-  } else if (input.status === 'generated-needs-review' && input.review !== undefined) {
-    addIssue(issues, 'simulation.review', 'Generated draft chưa được phép có review metadata.')
+  } else if (input.status !== 'reviewed' && input.review !== undefined) {
+    addIssue(issues, 'simulation.review', 'Simulation chưa review không được phép có review metadata.')
   } else if (input.status === 'reviewed') {
     if (input.review === undefined) addIssue(issues, 'simulation.review', 'Reviewed simulation bắt buộc có review metadata.')
     else reviewMetadata(input.review, 'simulation.review', issues)
   }
 
-  if (!isObject(input.generation)) {
-    addIssue(issues, 'simulation.generation', 'Generation metadata phải là object.')
-  } else {
-    exactKeys(
-      input.generation,
-      ['model', 'promptVersion', 'generatedAt', 'responseId', 'inputHash'],
-      ['model', 'promptVersion', 'generatedAt', 'inputHash'],
-      'simulation.generation',
-      issues,
-    )
-    text(input.generation.model, 'simulation.generation.model', issues, { max: 120 })
-    text(input.generation.promptVersion, 'simulation.generation.promptVersion', issues, { max: 80 })
-    if (!text(input.generation.generatedAt, 'simulation.generation.generatedAt', issues, { max: 40 })
-      || !ISO_DATE_PATTERN.test(String(input.generation.generatedAt))
-      || Number.isNaN(Date.parse(String(input.generation.generatedAt)))) {
-      addIssue(issues, 'simulation.generation.generatedAt', 'Phải là ISO UTC timestamp hợp lệ.')
+  if (isQuestionSpec) {
+    if (!isObject(input.generation)) {
+      addIssue(issues, 'simulation.generation', 'Generation metadata phải là object.')
+    } else {
+      generationMetadata(input.generation, 'simulation.generation', issues)
     }
-    if (input.generation.responseId !== undefined) id(input.generation.responseId, 'simulation.generation.responseId', issues)
-    hash(input.generation.inputHash, 'simulation.generation.inputHash', issues)
+  } else if (isLessonSpec) {
+    if (!isObject(input.provenance)) {
+      addIssue(issues, 'simulation.provenance', 'Lesson simulation provenance phải là object.')
+    } else if (input.provenance.kind === 'authored') {
+      exactKeys(
+        input.provenance,
+        ['kind', 'author', 'createdAt'],
+        ['kind', 'author', 'createdAt'],
+        'simulation.provenance',
+        issues,
+      )
+      text(input.provenance.author, 'simulation.provenance.author', issues, { max: 120 })
+      validIsoTimestamp(input.provenance.createdAt, 'simulation.provenance.createdAt', issues)
+      if (input.status === 'generated-needs-review') {
+        addIssue(issues, 'simulation.status', 'Authored provenance không thể dùng generated-needs-review.')
+      }
+    } else if (input.provenance.kind === 'ai-generated') {
+      generationMetadata(input.provenance, 'simulation.provenance', issues, true)
+      if (input.status === 'draft-needs-review') {
+        addIssue(issues, 'simulation.status', 'AI provenance phải dùng generated-needs-review hoặc reviewed.')
+      }
+    } else {
+      addIssue(issues, 'simulation.provenance.kind', 'Provenance kind không hợp lệ.')
+    }
   }
 
   if (issues.length === 0) {
     scenarios.forEach((entry, scenarioIndex) => {
-      if (entry.kind !== 'happy-path') return
       const terminalTransitionIndex = entry.transitions.length - 1
       const terminalSnapshot = entry.transitions[terminalTransitionIndex].snapshot
-      invariants.forEach((entry) => {
-        if (invariantPasses(entry, terminalSnapshot)) return
+      if (entry.kind === 'happy-path') {
+        invariants.forEach((invariantEntry) => {
+          if (invariantPasses(invariantEntry, terminalSnapshot)) return
+          addIssue(
+            issues,
+            `simulation.scenarios[${scenarioIndex}].transitions[${terminalTransitionIndex}].snapshot.${invariantEntry.stateKey}`,
+            `Happy-path terminal snapshot không thỏa invariant "${invariantEntry.id}".`,
+          )
+        })
+        return
+      }
+      if (entry.kind === 'failure' && invariants.every((invariantEntry) => (
+        invariantPasses(invariantEntry, terminalSnapshot)
+      ))) {
         addIssue(
           issues,
-          `simulation.scenarios[${scenarioIndex}].transitions[${terminalTransitionIndex}].snapshot.${entry.stateKey}`,
-          `Happy-path terminal snapshot không thỏa invariant "${entry.id}".`,
+          `simulation.scenarios[${scenarioIndex}].transitions[${terminalTransitionIndex}].snapshot`,
+          'Failure terminal snapshot phải vi phạm ít nhất một invariant để chứng minh failure bằng machine state.',
         )
-      })
+      }
     })
   }
 

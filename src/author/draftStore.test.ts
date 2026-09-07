@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import type { QuestionDraft } from '../content/types'
+import { createPwaKitArchitectureSimulation } from '../content/lessonSimulations/pwaKitArchitecture'
 import {
   appendDrafts,
   AUTHOR_DRAFT_STORAGE_KEY,
@@ -75,6 +77,19 @@ describe('draftStore', () => {
     const result = appendDrafts(storage, [createTestDraft()])
     expect(result).toMatchObject({ ok: false, code: 'duplicate-id' })
     expect(storage.values.get(AUTHOR_DRAFT_STORAGE_KEY)).toBe(before)
+  })
+
+  it('rejects a lesson schema v2 simulation instead of storing it as a question draft', () => {
+    const storage = new MemoryStorage()
+    const incompatible = {
+      ...createTestDraft(),
+      simulation: createPwaKitArchitectureSimulation('vi', 'a'.repeat(64)),
+    } as unknown as QuestionDraft
+
+    const result = upsertDraft(storage, incompatible)
+
+    expect(result).toMatchObject({ ok: false, code: 'invalid-draft' })
+    expect(storage.values.has(AUTHOR_DRAFT_STORAGE_KEY)).toBe(false)
   })
 
   it('drops and reports a simulation whose content hash is stale on load', () => {

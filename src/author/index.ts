@@ -3,11 +3,17 @@ export {
   AuthorApiError,
   formatAuthorApiError,
   generateDraftSimulation,
+  generateLessonSimulation,
   generateQuestionDrafts,
   readAuthorToken,
   writeAuthorToken,
 } from './aiClient'
-export type { GenerateQuestionsInput, GenerateSimulationInput, SessionStorageAdapter } from './aiClient'
+export type {
+  GenerateLessonSimulationInput,
+  GenerateQuestionsInput,
+  GenerateSimulationInput,
+  SessionStorageAdapter,
+} from './aiClient'
 export {
   appendDrafts,
   AUTHOR_DRAFT_SCHEMA_VERSION,
@@ -60,3 +66,35 @@ export {
   simulationGenerationInputHash,
 } from './questionContentHash'
 export type { SimulationGenerationInputShape, SimulationIntegrityWarning } from './questionContentHash'
+export {
+  canonicalLessonSimulationGenerateRequest,
+  createLessonSimulationGenerateRequest,
+  LESSON_SIMULATION_PROMPT_VERSION,
+  lessonSimulationEditorIdentity,
+  lessonSimulationGenerationInputHash,
+} from './lessonSimulationGeneration'
+export type {
+  LessonSimulationGenerateRequest,
+  LessonSimulationGenerationInput,
+} from './lessonSimulationGeneration'
+export {
+  getLessonSimulationDraft,
+  LESSON_SIMULATION_DRAFT_SCHEMA_VERSION,
+  LESSON_SIMULATION_DRAFT_STORAGE_KEY,
+  MAX_LESSON_SIMULATION_DRAFTS,
+  readLessonSimulationDraftStore,
+  removeLessonSimulationDraft,
+  resetLessonSimulationDraftStore,
+  upsertLessonSimulationDraft,
+} from './lessonSimulationDraftStore'
+export type {
+  LessonSimulationDraftEntry,
+  LessonSimulationDraftEnvelope,
+  LessonSimulationDraftLookupResult,
+  LessonSimulationDraftStoreErrorCode,
+  LessonSimulationDraftStoreFailure,
+  LessonSimulationDraftStoreMutationResult,
+  LessonSimulationDraftStoreReadResult,
+  LessonSimulationStorageAdapter,
+  LessonSimulationResetStorageAdapter,
+} from './lessonSimulationDraftStore'

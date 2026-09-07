@@ -1,18 +1,30 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, BookOpen, BrainCircuit, Clock, Code2, Flame, Menu, Search, Sparkles, Target, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BookOpen, BrainCircuit, Clock, Code2, Download, Flame, Menu, Search, Sparkles, Target, Trash2, X } from 'lucide-react'
 import { LocaleSwitcher } from './components/LocaleSwitcher'
+import { LessonContentView } from './components/LessonContent'
 import { SearchResults } from './components/SearchResults'
+import { SimulationPlayer } from './components/SimulationPlayer'
 import { WorkflowPlayer } from './components/WorkflowPlayer'
 import { getLessons } from './content/lessons'
+import { isRichLesson, lessonContentHash, validateLessonSimulationBinding } from './content/lessonValidation'
 import { interviewQuestionCount, interviewQuestionCountByLocale, interviewTopics } from './content/interviewTopics'
-import type { Lesson } from './content/types'
+import type { Lesson, LessonSimulationSpec, RichLesson } from './content/types'
 import { useLocale } from './i18n'
+import {
+  getLessonSimulationDraft,
+  LESSON_SIMULATION_DRAFT_STORAGE_KEY,
+  removeLessonSimulationDraft,
+  resetLessonSimulationDraftStore,
+  upsertLessonSimulationDraft,
+} from './author/lessonSimulationDraftStore'
 
 const InterviewExperience = lazy(() => import('./components/InterviewExperience'))
 const QuestionStudio = lazy(() => import('./components/QuestionStudio'))
+const LessonSimulationStudio = lazy(() => import('./components/LessonSimulationStudio'))
 const categories = ['JavaScript', 'TypeScript', 'SFCC', 'Backend', 'Database', 'System Design', 'AI Engineer']
 const authorStudioEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_AUTHOR_STUDIO === 'true'
 const mobileNavigationBreakpoint = 960
+const lessonSectionIds = ['lesson-quick-answer', 'lesson-understand', 'lesson-simulation', 'lesson-follow-ups'] as const
 
 function Logo() {
   return <div className="logo"><span aria-hidden="true"><Code2 size={20}/></span>Tech<span>Flow</span></div>
@@ -170,11 +182,237 @@ function App() {
   </main>
 }
 
-function LessonView({ lesson, onBack }: { lesson: Lesson; onBack: () => void }) {
+type LocalLessonSimulationState = {
+  localSimulation: LessonSimulationSpec | null
+  staleLocalSimulation: LessonSimulationSpec | null
+  localStorageIssue: {
+    message: string
+    rawValue?: string
+  } | null
+}
+
+function readLocalLessonSimulation(lesson: RichLesson): LocalLessonSimulationState {
+  const empty = {
+    localSimulation: null,
+    staleLocalSimulation: null,
+    localStorageIssue: null,
+  }
+  if (!authorStudioEnabled || typeof window === 'undefined') return empty
+
+  let storage: Storage
+  try {
+    storage = window.localStorage
+  } catch {
+    return {
+      ...empty,
+      localStorageIssue: {
+        message: 'Browser đang chặn local storage nên chưa thể đọc lesson simulation draft.',
+      },
+    }
+  }
+  const stored = getLessonSimulationDraft(storage, lesson)
+  if (!stored.ok) return {
+    ...empty,
+    localStorageIssue: { message: stored.message, rawValue: stored.rawValue },
+  }
+  if (stored.status === 'active') return { ...empty, localSimulation: stored.activeSimulation }
+  if (stored.status === 'stale') return { ...empty, staleLocalSimulation: stored.entry.simulation }
+  return empty
+}
+
+function RichLessonSimulation({ lesson }: { lesson: RichLesson }) {
   const { copy } = useLocale()
+  const simulationSectionRef = useRef<HTMLElement>(null)
+  const [localState, setLocalState] = useState<LocalLessonSimulationState>(() => (
+    readLocalLessonSimulation(lesson)
+  ))
+  const [resetConfirmation, setResetConfirmation] = useState(false)
+  const activeSimulation = localState.localSimulation ?? lesson.simulation
+  const simulationBinding = activeSimulation
+    ? validateLessonSimulationBinding({ ...lesson, simulation: activeSimulation } as RichLesson)
+    : null
+
+  const applyLocalSimulation = async (simulation: LessonSimulationSpec) => {
+    if (typeof window === 'undefined') return
+    let storage: Storage
+    try {
+      storage = window.localStorage
+    } catch {
+      throw new Error('Browser đang chặn local storage. Hãy export JSON để giữ draft.')
+    }
+    const result = upsertLessonSimulationDraft(storage, lesson, simulation)
+    if (!result.ok) throw new Error(result.message)
+    setLocalState({
+      localSimulation: simulation,
+      staleLocalSimulation: null,
+      localStorageIssue: null,
+    })
+  }
+
+  const restoreRepositorySimulation = async () => {
+    if (typeof window === 'undefined') return
+    let storage: Storage
+    try {
+      storage = window.localStorage
+    } catch {
+      throw new Error('Browser đang chặn local storage nên chưa thể xóa local override.')
+    }
+    const result = removeLessonSimulationDraft(storage, lesson.locale, lesson.slug)
+    if (!result.ok) throw new Error(result.message)
+    setLocalState({
+      localSimulation: null,
+      staleLocalSimulation: null,
+      localStorageIssue: null,
+    })
+  }
+
+  const exportCorruptStore = () => {
+    const rawValue = localState.localStorageIssue?.rawValue
+    if (!rawValue) return
+    const url = URL.createObjectURL(new Blob([rawValue], { type: 'text/plain;charset=utf-8' }))
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `techflow-lesson-simulation-store-recovery-${lesson.locale}.txt`
+    anchor.click()
+    globalThis.setTimeout(() => URL.revokeObjectURL(url), 0)
+  }
+
+  const resetCorruptStore = () => {
+    if (!resetConfirmation) {
+      setResetConfirmation(true)
+      return
+    }
+    let storage: Storage
+    try {
+      storage = window.localStorage
+    } catch {
+      setLocalState(state => ({
+        ...state,
+        localStorageIssue: {
+          message: lesson.locale === 'en'
+            ? 'The browser is blocking local storage, so the corrupt draft store cannot be reset.'
+            : 'Browser đang chặn local storage nên chưa thể reset draft store bị lỗi.',
+          rawValue: state.localStorageIssue?.rawValue,
+        },
+      }))
+      return
+    }
+    const result = resetLessonSimulationDraftStore(storage)
+    if (!result.ok) {
+      setLocalState(state => ({
+        ...state,
+        localStorageIssue: {
+          message: result.message,
+          rawValue: state.localStorageIssue?.rawValue,
+        },
+      }))
+      return
+    }
+    setResetConfirmation(false)
+    setLocalState({
+      localSimulation: null,
+      staleLocalSimulation: null,
+      localStorageIssue: null,
+    })
+    globalThis.setTimeout(() => simulationSectionRef.current?.focus(), 0)
+  }
+
+  return <section
+    ref={simulationSectionRef}
+    id="lesson-simulation"
+    className="lesson-simulation-section"
+    aria-label={copy.lesson.sections[2]}
+    tabIndex={-1}
+  >
+    {authorStudioEnabled && <Suspense fallback={<div className="empty-sim" aria-live="polite">{copy.home.authorStudioLoading}</div>}>
+      <LessonSimulationStudio
+        lesson={lesson}
+        activeSimulation={activeSimulation}
+        localOverrideActive={Boolean(localState.localSimulation)}
+        staleStoredSimulation={localState.staleLocalSimulation ?? undefined}
+        onApplyLocal={applyLocalSimulation}
+        onRestoreRepository={restoreRepositorySimulation}
+        onDiscardStale={restoreRepositorySimulation}
+      />
+    </Suspense>}
+    {localState.localStorageIssue && <div className="lesson-simulation-warning" role="alert">
+      <h2>{lesson.locale === 'en' ? 'Local draft storage is unavailable' : 'Không thể dùng local draft storage'}</h2>
+      <p>{localState.localStorageIssue.message}</p>
+      {localState.localStorageIssue.rawValue && <div className="lesson-simulation-recovery__actions">
+        <button type="button" onClick={exportCorruptStore}>
+          <Download size={16} aria-hidden="true" />
+          {lesson.locale === 'en' ? 'Download recovery copy' : 'Tải bản recovery'}
+        </button>
+        <button type="button" onClick={resetCorruptStore}>
+          <Trash2 size={16} aria-hidden="true" />
+          {resetConfirmation
+            ? lesson.locale === 'en' ? 'Confirm reset of all local simulation drafts' : 'Xác nhận reset toàn bộ local simulation drafts'
+            : lesson.locale === 'en' ? 'Reset corrupt local store' : 'Reset local store bị lỗi'}
+        </button>
+        {resetConfirmation && <span role="status">
+          {lesson.locale === 'en'
+            ? `This deletes only ${LESSON_SIMULATION_DRAFT_STORAGE_KEY}. Download recovery first if needed.`
+            : `Thao tác chỉ xóa ${LESSON_SIMULATION_DRAFT_STORAGE_KEY}. Hãy tải recovery trước nếu cần.`}
+        </span>}
+      </div>}
+    </div>}
+    {activeSimulation
+      ? simulationBinding?.success
+        ? <SimulationPlayer spec={activeSimulation}/>
+        : <div className="lesson-simulation-warning" role="alert">
+            <h2>{copy.lesson.simulationInvalidTitle}</h2>
+            <p>{copy.lesson.simulationInvalidBody}</p>
+          </div>
+      : lesson.workflow.length
+        ? <WorkflowPlayer steps={lesson.workflow}/>
+        : <div className="empty-sim">{copy.lesson.simulationPending}</div>}
+  </section>
+}
+
+export function LessonView({ lesson, onBack }: { lesson: Lesson; onBack: () => void }) {
+  const { copy } = useLocale()
+  const richLesson = isRichLesson(lesson) ? lesson : null
+  const [activeSectionId, setActiveSectionId] = useState<(typeof lessonSectionIds)[number]>(lessonSectionIds[0])
+
+  useEffect(() => {
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }, [lesson.slug])
+
+  useEffect(() => {
+    const sections = lessonSectionIds
+      .map((id) => document.getElementById(id))
+      .filter((section): section is HTMLElement => Boolean(section))
+
+    const updateActiveSection = () => {
+      const activationLine = Math.min(window.innerHeight * 0.28, 220)
+      let nextSection: (typeof lessonSectionIds)[number] = lessonSectionIds[0]
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top <= activationLine) {
+          nextSection = section.id as (typeof lessonSectionIds)[number]
+        }
+      }
+
+      const pageBottom = Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight - 2
+      if (pageBottom) nextSection = lessonSectionIds[lessonSectionIds.length - 1]
+      setActiveSectionId(nextSection)
+    }
+
+    window.addEventListener('scroll', updateActiveSection, { passive: true })
+    window.addEventListener('resize', updateActiveSection)
+    return () => {
+      window.removeEventListener('scroll', updateActiveSection)
+      window.removeEventListener('resize', updateActiveSection)
+    }
+  }, [lesson.slug])
+
+  const navigateToSection = (sectionId: (typeof lessonSectionIds)[number]) => {
+    setActiveSectionId(sectionId)
+    document.getElementById(sectionId)?.scrollIntoView?.({ block: 'start' })
+  }
 
   return <main>
-    <header>
+    <header className="site-header">
       <Logo/>
       <div className="header-actions">
         <LocaleSwitcher/>
@@ -183,18 +421,58 @@ function LessonView({ lesson, onBack }: { lesson: Lesson; onBack: () => void }) 
       </div>
     </header>
     <div className="lesson-layout">
-      <aside>
+      <aside className="lesson-toc" aria-label={copy.lesson.contentLabel}>
         <span className="eyebrow">{copy.lesson.contentLabel}</span>
-        {copy.lesson.sections.map((section, index) => <a className={index === 2 ? 'active' : ''} key={section}><span>{index + 1}</span>{section}</a>)}
+        {copy.lesson.sections.map((section, index) => {
+          const sectionId = lessonSectionIds[index]
+          if (!sectionId) return null
+          const isActive = activeSectionId === sectionId
+          return <a
+            className={isActive ? 'active' : ''}
+            href={`#${sectionId}`}
+            aria-current={isActive ? 'location' : undefined}
+            key={sectionId}
+            onClick={() => setActiveSectionId(sectionId)}
+          ><span>{index + 1}</span>{section}</a>
+        })}
       </aside>
+      <div className="lesson-mobile-toc">
+        <label htmlFor="lesson-section-select">{copy.lesson.contentLabel}</label>
+        <select
+          id="lesson-section-select"
+          value={activeSectionId}
+          onChange={(event) => navigateToSection(event.target.value as (typeof lessonSectionIds)[number])}
+        >
+          {copy.lesson.sections.map((section, index) => {
+            const sectionId = lessonSectionIds[index]
+            return sectionId ? <option key={sectionId} value={sectionId}>{index + 1}. {section}</option> : null
+          })}
+        </select>
+      </div>
       <article className="lesson-page">
         <div className="breadcrumbs">{lesson.category} / {copy.common.level[lesson.difficulty]}</div>
         <h1>{lesson.title}</h1>
         <div className="lesson-meta"><span><Clock size={16}/>{copy.common.minutes(lesson.duration)}</span><span><BookOpen size={16}/>{copy.lesson.visualLesson}</span><span><Flame size={16}/>+120 XP</span></div>
-        <section className="quick-answer"><span>{copy.lesson.quickAnswer}</span><p>{lesson.shortAnswer}</p></section>
-        <h2>{copy.lesson.overviewTitle}</h2><p>{copy.lesson.overviewDescription}</p>
-        {lesson.workflow.length ? <WorkflowPlayer steps={lesson.workflow}/> : <div className="empty-sim">{copy.lesson.simulationPending}</div>}
-        <section className="follow-ups"><span className="eyebrow">{copy.lesson.followUps}</span>{lesson.followUps.map((question, index) => <div key={question}><b>0{index + 1}</b><span>{question}</span><ArrowRight size={18}/></div>)}</section>
+        <section id="lesson-quick-answer" className="quick-answer" aria-labelledby="lesson-quick-answer-title"><h2 id="lesson-quick-answer-title" className="sr-only">{copy.lesson.sections[0]}</h2><span>{copy.lesson.quickAnswer}</span><p>{lesson.shortAnswer}</p></section>
+        {lesson.content
+          ? <LessonContentView
+              content={lesson.content}
+              reviewStatus={lesson.reviewStatus}
+              translationStatus={lesson.locale === 'en' ? lesson.translationStatus : undefined}
+            />
+          : <section id="lesson-understand" className="lesson-generic-overview"><h2>{copy.lesson.overviewTitle}</h2><p>{copy.lesson.overviewDescription}</p></section>
+        }
+        {richLesson
+          ? <RichLessonSimulation
+              key={`${richLesson.locale}:${richLesson.slug}:${lessonContentHash(richLesson)}`}
+              lesson={richLesson}
+            />
+          : <section id="lesson-simulation" className="lesson-simulation-section" aria-label={copy.lesson.sections[2]}>
+              {lesson.workflow.length
+                ? <WorkflowPlayer steps={lesson.workflow}/>
+                : <div className="empty-sim">{copy.lesson.simulationPending}</div>}
+            </section>}
+        <section id="lesson-follow-ups" className="follow-ups" aria-labelledby="lesson-follow-ups-title"><h2 id="lesson-follow-ups-title" className="eyebrow">{copy.lesson.followUps}</h2>{lesson.followUps.map((question, index) => <div key={question}><b>0{index + 1}</b><span>{question}</span><ArrowRight size={18}/></div>)}</section>
       </article>
     </div>
   </main>

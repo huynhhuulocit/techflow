@@ -3,13 +3,20 @@ import {
   AUTHOR_REQUEST_TIMEOUT_MS,
   AUTHOR_TOKEN_SESSION_KEY,
   generateDraftSimulation,
+  generateLessonSimulation,
   generateQuestionDrafts,
   readAuthorToken,
   writeAuthorToken,
   type SessionStorageAdapter,
   type GenerateSimulationInput,
 } from './aiClient'
+import { getLessons } from '../content/lessons'
+import type { LessonSimulationSpec, RichLesson } from '../content/types'
 import { createTestDraft, createTestSimulation } from './testFixtures'
+import {
+  createLessonSimulationGenerateRequest,
+  lessonSimulationGenerationInputHash,
+} from './lessonSimulationGeneration'
 import { simulationGenerationInputHash } from './questionContentHash'
 
 class MemorySessionStorage implements SessionStorageAdapter {
@@ -41,6 +48,35 @@ function simulationInputFor(draft = createTestDraft()): GenerateSimulationInput 
     },
     kind: 'sequence',
     failureScenario: '',
+  }
+}
+
+function lessonSimulationInput() {
+  const lesson = getLessons('vi').find(entry => entry.slug === 'pwa-kit-architecture')
+  if (!lesson?.content || !lesson.simulation) throw new Error('Missing rich PWA lesson simulation')
+  return {
+    lesson: lesson as RichLesson,
+    kind: 'flow' as const,
+    failureScenario: '',
+  }
+}
+
+function generatedLessonSimulation(): LessonSimulationSpec {
+  const input = lessonSimulationInput()
+  const request = createLessonSimulationGenerateRequest(input)
+  const simulation = structuredClone(input.lesson.simulation)
+  if (!simulation) throw new Error('Missing simulation')
+  return {
+    ...simulation,
+    status: 'generated-needs-review',
+    review: undefined,
+    provenance: {
+      kind: 'ai-generated',
+      model: 'test-model',
+      promptVersion: 'lesson-simulation-v2',
+      generatedAt: '2026-09-07T00:00:00.000Z',
+      inputHash: lessonSimulationGenerationInputHash(request),
+    },
   }
 }
 
@@ -128,5 +164,52 @@ describe('author API client', () => {
     const assertion = expect(pending).rejects.toMatchObject({ details: { code: 'timeout' } })
     await vi.advanceTimersByTimeAsync(AUTHOR_REQUEST_TIMEOUT_MS)
     await assertion
+  })
+
+  it('accepts a schema v2 lesson simulation bound to the full lesson source', async () => {
+    const input = lessonSimulationInput()
+    const generated = generatedLessonSimulation()
+    const fetcher = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response(JSON.stringify({
+      simulation: generated,
+      requestId: 'lesson-request-1',
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }))
+
+    await expect(generateLessonSimulation(input, 'author-token', fetcher)).resolves.toMatchObject({
+      simulation: { schemaVersion: 2, id: generated.id },
+      requestId: 'lesson-request-1',
+    })
+    const [route, init] = fetcher.mock.calls[0]
+    expect(route).toBe('/api/author/lesson-simulations/generate')
+    expect(String(init?.body)).toContain(`"sourceContentHash":"${generated.source.contentHash}"`)
+    expect(String(init?.body)).not.toContain('author-token')
+  })
+
+  it('rejects lesson output with a mismatched source, lifecycle, or actor topology', async () => {
+    const input = lessonSimulationInput()
+    const valid = generatedLessonSimulation()
+    const invalidOutputs: LessonSimulationSpec[] = [
+      { ...valid, source: { ...valid.source, slug: 'another-lesson' } },
+      { ...valid, status: 'reviewed' },
+      { ...valid, actors: valid.actors.slice().reverse() },
+      {
+        ...valid,
+        provenance: valid.provenance.kind === 'ai-generated'
+          ? { ...valid.provenance, inputHash: 'f'.repeat(64) }
+          : valid.provenance,
+      },
+    ]
+
+    for (const simulation of invalidOutputs) {
+      const fetcher = vi.fn(async () => new Response(JSON.stringify({ simulation }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }))
+      await expect(generateLessonSimulation(input, 'author-token', fetcher)).rejects.toMatchObject({
+        details: { code: 'invalid_response' },
+      })
+    }
   })
 })

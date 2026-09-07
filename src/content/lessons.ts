@@ -1,4 +1,6 @@
 import type { Lesson, Locale } from './types'
+import { pwaKitArchitectureContent } from './lessonContent/pwaKitArchitecture'
+import { createPwaKitArchitectureSimulation } from './lessonSimulations/pwaKitArchitecture'
 
 const lessonsVi: Lesson[] = [
   {
@@ -72,10 +74,14 @@ const lessonsVi: Lesson[] = [
   {
     slug: 'pwa-kit-architecture',
     title: 'PWA Kit hoạt động trong kiến trúc SFCC ra sao?',
-    shortAnswer: 'PWA Kit là framework React cho storefront composable, hỗ trợ JavaScript hoặc TypeScript, SSR và hydration; ứng dụng lấy dữ liệu commerce từ Salesforce B2C Commerce qua API.',
+    shortAnswer: 'PWA Kit là React framework dùng để xây storefront của Composable Storefront. Managed Runtime host và vận hành storefront, còn B2C Commerce giữ commerce data và business capabilities. Initial HTML có thể đến từ CDN cache hoặc được app server SSR; browser sau đó hydrate và xử lý các client navigation tiếp theo.',
     category: 'SFCC', difficulty: 'Trung cấp', duration: 16, tags: ['PWA Kit', 'React', 'SSR'], progress: 0,
+    locale: 'vi',
+    content: pwaKitArchitectureContent.vi,
+    simulation: createPwaKitArchitectureSimulation('vi', 'd3b3853034af4207cfbcf0b211a3a8d541669505a0647cc0f01e45deaba1b881'),
+    reviewStatus: 'draft-needs-review',
     workflow: [],
-    followUps: ['PWA Kit có giống PWA web thông thường không?', 'SSR và hydration phối hợp ra sao?', 'Storefront giao tiếp với SFCC bằng API nào?'],
+    followUps: ['Hãy trace một PDP request khi cache miss, cache hit và lần navigation tiếp theo sau hydration.', 'Bạn phân chia trách nhiệm giữa PWA Kit, Managed Runtime, SLAS và B2C Commerce như thế nào; call nào nên chạy server-side hoặc client-side?', 'Bạn thiết kế caching cho PDP có locale, currency, promotion và authenticated shopper ra sao để vừa giữ cache-hit ratio vừa không làm lộ personalized data?'],
     search: { aliases: ['pwa', 'progressive web app', 'salesforce pwa kit'], concepts: ['pwa', 'pwa kit', 'react storefront', 'ssr', 'service worker'], relatedSlugs: ['sfcc-composable-storefront', 'typescript-web-app'] },
   },
   {
@@ -161,10 +167,16 @@ const lessonsEn: Lesson[] = [
   {
     slug: 'pwa-kit-architecture',
     title: 'How does PWA Kit fit into an SFCC architecture?',
-    shortAnswer: 'PWA Kit is a React framework for composable storefronts with JavaScript or TypeScript, SSR, and hydration. The application gets commerce data from Salesforce B2C Commerce through APIs.',
+    shortAnswer: 'PWA Kit is the React framework used to build a Composable Storefront. Managed Runtime hosts and operates the storefront, while B2C Commerce retains commerce data and business capabilities. Initial HTML can come from CDN cache or app-server SSR; the browser then hydrates it and handles later client navigation.',
     category: 'SFCC', difficulty: 'Trung cấp', duration: 16, tags: ['PWA Kit', 'React', 'SSR'], progress: 0,
+    locale: 'en',
+    content: pwaKitArchitectureContent.en,
+    simulation: createPwaKitArchitectureSimulation('en', 'b1c78dbb400de37465efa164e8efc066aa4bf8385c7b8cb053d8493db435a56a'),
+    reviewStatus: 'draft-needs-review',
+    translationStatus: 'translated-needs-review',
+    translatedFromHash: 'd3b3853034af4207cfbcf0b211a3a8d541669505a0647cc0f01e45deaba1b881',
     workflow: [],
-    followUps: ['Is PWA Kit the same as a conventional Progressive Web App?', 'How do SSR and hydration work together?', 'Which APIs connect the storefront to SFCC?'],
+    followUps: ['Trace a PDP request on a cache miss, a cache hit, and the next navigation after hydration.', 'How do you divide responsibility across PWA Kit, Managed Runtime, SLAS, and B2C Commerce; which calls should run server-side or client-side?', 'How would you cache a PDP with locale, currency, promotions, and an authenticated shopper without leaking personalized data while preserving cache-hit ratio?'],
     search: { aliases: ['pwa', 'progressive web app', 'salesforce pwa kit'], concepts: ['pwa', 'pwa kit', 'react storefront', 'ssr', 'service worker'], relatedSlugs: ['sfcc-composable-storefront', 'typescript-web-app'] },
   },
   {

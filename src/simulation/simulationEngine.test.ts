@@ -122,6 +122,29 @@ describe('simulation runtime', () => {
     expect(getSimulationActorPlaybackState('service', scenario, state)).toBe('complete')
   })
 
+  it('does not mark a recurring actor complete before its final transition', () => {
+    const spec = createSpec()
+    const scenario = spec.scenarios[0]
+    scenario.transitions.push({
+      id: 'normal.confirmed',
+      actorId: 'client',
+      event: 'Nhận kết quả',
+      explanation: 'Client hiển thị kết quả sau khi service hoàn tất.',
+      snapshot: { stage: 'confirmed', attempts: 1 },
+      highlights: ['client', 'stage'],
+    })
+    let state = createInitialSimulationState(spec)
+
+    state = reduceSimulationState(spec, state, { type: 'STEP_NEXT' })
+    state = reduceSimulationState(spec, state, { type: 'STEP_NEXT' })
+    expect(getSimulationActorPlaybackState('client', scenario, state)).toBe('visited')
+    expect(getSimulationActorPlaybackState('service', scenario, state)).toBe('active')
+
+    state = reduceSimulationState(spec, state, { type: 'STEP_NEXT' })
+    expect(getSimulationActorPlaybackState('client', scenario, state)).toBe('complete')
+    expect(getSimulationActorPlaybackState('service', scenario, state)).toBe('complete')
+  })
+
   it('supports scenario selection, manual stepping, reset and speed', () => {
     const spec = createSpec()
     let state = createInitialSimulationState(spec)

@@ -17,6 +17,15 @@ npm run lint
 npm run build
 ```
 
+Browser smoke check cho lesson navigation (cần `npx`; cài Chromium một lần trên máy mới):
+
+```bash
+npx --yes --package @playwright/cli@0.1.19 playwright-cli install-browser chromium
+npm run test:browser
+```
+
+Check này tự mở một Vite server cô lập tại `127.0.0.1:4173`, kiểm tra desktop/mobile rồi đóng server; không phụ thuộc dev server đang mở ở port `5173`.
+
 Regenerate và validate Interview Question Bank từ GameStream:
 
 ```bash
@@ -47,7 +56,7 @@ Xem ranh giới nguồn và review workflow tại [docs/interview-import.md](doc
 
 - Landing page và thư viện câu hỏi.
 - Tìm kiếm, lọc chủ đề không cần horizontal scroll và navigation responsive có keyboard support.
-- Trang bài học Event Loop.
+- Trang bài học Event Loop và rich lesson PWA Kit song ngữ với evidence/review boundary.
 - Workflow player có play, pause, reset và chuyển từng bước.
 - Search theo từ khóa, alias, lỗi chính tả gần đúng và quan hệ giữa nhiều khái niệm.
 - Trang kết quả gồm câu trả lời tổng hợp, knowledge path, bài học liên quan và câu hỏi gợi ý.
@@ -57,11 +66,13 @@ Xem ranh giới nguồn và review workflow tại [docs/interview-import.md](doc
 - Local filter, accent-insensitive search, pagination và điều hướng câu trước/câu tiếp.
 - Source/review metadata để nội dung vừa import không bị trình bày như technical claim đã verified.
 - Question Studio cho phép soạn tay, copy câu từ Question Bank, import/export JSON hoặc GameStream Markdown và lưu draft trong browser.
-- Local opt-in AI có thể tạo question draft hoặc deterministic simulation draft; mọi output đều cần human review trước khi publish.
+- Local opt-in AI có thể tạo question draft, question-bound simulation schema v1 và lesson-bound simulation schema v2; mọi output đều cần human review trước khi publish.
+- Rich lesson có AI Simulation Studio với Generate/Regenerate, schema/source validation, deterministic preview, Apply locally, Restore, Discard và Export JSON. Local override không sửa repository và luôn giữ `generated-needs-review`.
 - Simulation player có scenario, state snapshot, invariant, Step/Back/Play/Pause/Reset, transcript và reduced-motion behavior.
+- PWA Kit dùng lesson-bound simulation schema v2 cho cache miss, cache hit và unsafe personalized-cache failure; source hash/provenance ngăn simulation stale được chạy như nội dung hiện hành.
 - 4 custom agents và 3 project skills.
 
-Question Bank dùng hai locale bundle tải theo nhu cầu: snapshot Vietnamese được generate từ 39 level files trong `D:\research\gameStream\docs\interview`, còn English là overlay TypeScript checked-in của 45 câu. Frontend không đọc repository GameStream lúc runtime. API Overview có format study guide riêng và được hoãn sang phase sau, không nằm trong 585 câu hiện tại.
+Question Bank dùng hai locale bundle tải theo nhu cầu: snapshot Vietnamese được generate từ 39 level files đã bundle trong `content/interview/vi`, còn English là overlay TypeScript checked-in của 45 câu. Bộ nguồn Vietnamese ban đầu được nhập từ GameStream nhưng nay thuộc standalone repository, nên development, CI và deployment không phụ thuộc một sibling repository. Frontend chỉ đọc generated snapshot lúc runtime. API Overview có format study guide riêng và được hoãn sang phase sau, không nằm trong 585 câu hiện tại.
 
 ## Thử chức năng search
 

@@ -1,18 +1,29 @@
 import type {
   InterviewLevel,
+  LessonSimulationSpec,
   Locale,
+  QuestionSimulationSpec,
   QuestionDraft,
+  RichLesson,
   SimulationKind,
-  SimulationSpec,
 } from '../content/types'
 import { validateSimulationSpec } from '../simulation'
+import { validateLessonSimulationBinding } from '../content/lessonValidation'
 import { validateQuestionDraft } from './draftValidation'
+import {
+  createLessonSimulationGenerateRequest,
+  lessonSimulationGenerationInputHash,
+  type LessonSimulationGenerationInput,
+} from './lessonSimulationGeneration'
 import { questionContentHash, simulationGenerationInputHash } from './questionContentHash'
 
 export const AUTHOR_TOKEN_SESSION_KEY = 'techflow.author.token.v1'
 export const QUESTION_GENERATE_ROUTE = '/api/author/questions/generate'
 export const SIMULATION_GENERATE_ROUTE = '/api/author/simulations/generate'
-export const AUTHOR_REQUEST_TIMEOUT_MS = 30_000
+export const LESSON_SIMULATION_GENERATE_ROUTE = '/api/author/lesson-simulations/generate'
+// Leave room for the server's 30-second provider timeout to return a typed
+// error instead of racing the browser abort.
+export const AUTHOR_REQUEST_TIMEOUT_MS = 35_000
 
 export type SessionStorageAdapter = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 
@@ -31,6 +42,8 @@ export type GenerateSimulationInput = {
   kind: SimulationKind
   failureScenario: string
 }
+
+export type GenerateLessonSimulationInput = LessonSimulationGenerationInput
 
 export type AuthorApiErrorDetails = {
   status?: number
@@ -91,6 +104,9 @@ function friendlyMessage(code: string, status?: number, locale: Locale = 'vi') {
       case 'timeout': return 'The AI request timed out. Your current draft is unchanged.'
       case 'rate_limited': return 'The AI provider is rate limiting requests. Your current draft is unchanged.'
       case 'invalid_request': return 'The Author API request is invalid.'
+      case 'source_hash_mismatch': return 'The lesson changed before generation started. Reload the lesson and try again.'
+      case 'invalid_output': return 'The AI output did not pass TechFlow simulation validation. Your current preview is unchanged.'
+      case 'upstream_error': return 'The AI provider could not complete this request. Your current preview is unchanged.'
       case 'invalid_response': return 'The Author API returned data outside the expected schema. No drafts were changed.'
       case 'network_error': return 'Could not reach the local Author API. Check the dev server, then try again.'
       default: return status ? `The Author API returned HTTP ${status}. Your current draft is unchanged.` : 'Could not call the Author API.'
@@ -116,6 +132,12 @@ function friendlyMessage(code: string, status?: number, locale: Locale = 'vi') {
       return 'AI provider đang giới hạn request. Draft hiện tại vẫn được giữ nguyên.'
     case 'invalid_request':
       return 'Dữ liệu gửi tới Author API chưa hợp lệ.'
+    case 'source_hash_mismatch':
+      return 'Lesson đã thay đổi trước khi generation bắt đầu. Hãy reload lesson rồi thử lại.'
+    case 'invalid_output':
+      return 'AI output không vượt qua simulation validation của TechFlow. Preview hiện tại vẫn được giữ nguyên.'
+    case 'upstream_error':
+      return 'AI provider không hoàn tất được request. Preview hiện tại vẫn được giữ nguyên.'
     case 'invalid_response':
       return 'Author API trả về dữ liệu không đúng schema. Không có draft nào bị thay đổi.'
     case 'network_error':
@@ -148,7 +170,10 @@ function responseIssues(body: Record<string, unknown>) {
 }
 
 async function postAuthorJson(
-  route: typeof QUESTION_GENERATE_ROUTE | typeof SIMULATION_GENERATE_ROUTE,
+  route:
+    | typeof QUESTION_GENERATE_ROUTE
+    | typeof SIMULATION_GENERATE_ROUTE
+    | typeof LESSON_SIMULATION_GENERATE_ROUTE,
   payload: unknown,
   authorToken: string,
   fetcher: Fetcher,
@@ -257,13 +282,19 @@ export async function generateDraftSimulation(
   input: GenerateSimulationInput,
   authorToken: string,
   fetcher: Fetcher = globalThis.fetch.bind(globalThis),
-): Promise<{ simulation: SimulationSpec; requestId?: string }> {
+): Promise<{ simulation: QuestionSimulationSpec; requestId?: string }> {
   const body = await postAuthorJson(SIMULATION_GENERATE_ROUTE, input, authorToken, fetcher)
   const validation = validateSimulationSpec(body.simulation)
   if (!validation.success) {
     throw new AuthorApiError(friendlyMessage('invalid_response'), {
       code: 'invalid_response',
       issues: validation.issues.slice(0, 6).map(issue => `${issue.path}: ${issue.message}`),
+    })
+  }
+  if (validation.data.schemaVersion !== 1) {
+    throw new AuthorApiError(friendlyMessage('invalid_response'), {
+      code: 'invalid_response',
+      issues: ['Question Studio only accepts question-bound simulation schema version 1.'],
     })
   }
   if (
@@ -280,6 +311,67 @@ export async function generateDraftSimulation(
 
   return {
     simulation: validation.data,
+    requestId: typeof body.requestId === 'string' ? body.requestId : undefined,
+  }
+}
+
+export async function generateLessonSimulation(
+  input: GenerateLessonSimulationInput,
+  authorToken: string,
+  fetcher: Fetcher = globalThis.fetch.bind(globalThis),
+): Promise<{ simulation: LessonSimulationSpec; requestId?: string }> {
+  const request = createLessonSimulationGenerateRequest(input)
+  const body = await postAuthorJson(
+    LESSON_SIMULATION_GENERATE_ROUTE,
+    request,
+    authorToken,
+    fetcher,
+  )
+  const validation = validateSimulationSpec(body.simulation)
+  if (!validation.success) {
+    throw new AuthorApiError(friendlyMessage('invalid_response', undefined, input.lesson.locale), {
+      code: 'invalid_response',
+      issues: validation.issues.slice(0, 6).map(issue => `${issue.path}: ${issue.message}`),
+    })
+  }
+
+  const simulation = validation.data
+  const requestedActorIds = input.lesson.content.actors.map(actor => actor.id)
+  const generatedActorIds = simulation.actors.map(actor => actor.id)
+  const actorTopologyMatches = requestedActorIds.length === generatedActorIds.length
+    && requestedActorIds.every((actorId, index) => generatedActorIds[index] === actorId)
+  const identityMatches = simulation.schemaVersion === 2
+    && simulation.source.kind === 'lesson'
+    && simulation.source.slug === input.lesson.slug
+    && simulation.source.contentHash === request.sourceContentHash
+    && simulation.locale === input.lesson.locale
+    && simulation.kind === input.kind
+    && simulation.status === 'generated-needs-review'
+    && simulation.review === undefined
+    && simulation.provenance.kind === 'ai-generated'
+    && simulation.provenance.inputHash === lessonSimulationGenerationInputHash(request)
+    && actorTopologyMatches
+
+  if (!identityMatches) {
+    throw new AuthorApiError(friendlyMessage('invalid_response', undefined, input.lesson.locale), {
+      code: 'invalid_response',
+      issues: ['Lesson simulation source identity, actor topology, lifecycle, or generation input hash does not match the request.'],
+    })
+  }
+
+  const binding = validateLessonSimulationBinding({
+    ...input.lesson,
+    simulation,
+  } as RichLesson)
+  if (!binding.success) {
+    throw new AuthorApiError(friendlyMessage('invalid_response', undefined, input.lesson.locale), {
+      code: 'invalid_response',
+      issues: binding.issues.slice(0, 6).map(issue => `${issue.path}: ${issue.message}`),
+    })
+  }
+
+  return {
+    simulation,
     requestId: typeof body.requestId === 'string' ? body.requestId : undefined,
   }
 }

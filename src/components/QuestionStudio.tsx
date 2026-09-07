@@ -289,6 +289,7 @@ function validationMessages(issues: DraftValidationIssue[], locale: 'vi' | 'en',
 function integrityMessage(warning: SimulationIntegrityWarning, locale: 'vi' | 'en') {
   if (locale === 'vi') return warning.message
   switch (warning.code) {
+    case 'unsupported-schema': return `Draft ${warning.draftId}: simulation removed because Question Studio only supports schema version 1.`
     case 'source-id-mismatch': return `Draft ${warning.draftId}: simulation removed because its source ID did not match.`
     case 'locale-mismatch': return `Draft ${warning.draftId}: simulation removed because its locale did not match.`
     case 'content-hash-mismatch': return `Draft ${warning.draftId}: simulation removed because the question content changed.`

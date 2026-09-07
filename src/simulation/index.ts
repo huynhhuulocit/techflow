@@ -17,6 +17,7 @@ export type {
 } from './simulationEngine'
 export {
   canonicalSimulationReviewContent,
+  simulationSourceContentHash,
   simulationReviewHash,
   validateSimulationSpec,
 } from './simulationValidator'

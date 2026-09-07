@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { validateQuestionDraft } from './draftValidation'
 import { createTestDraft, createTestSimulation, testContent } from './testFixtures'
 import { questionContentHash } from './questionContentHash'
+import { createPwaKitArchitectureSimulation } from '../content/lessonSimulations/pwaKitArchitecture'
 
 describe('validateQuestionDraft', () => {
   it('accepts a complete manual draft', () => {
@@ -33,6 +34,21 @@ describe('validateQuestionDraft', () => {
     expect(result.success).toBe(false)
     if (!result.success) {
       expect(result.issues).toContainEqual(expect.objectContaining({ path: 'draft.simulation.status' }))
+    }
+  })
+
+  it('rejects lesson-bound schema v2 simulations at the Question Studio boundary', () => {
+    const draft = {
+      ...createTestDraft(),
+      simulation: createPwaKitArchitectureSimulation('vi', 'a'.repeat(64)),
+    }
+    const result = validateQuestionDraft(draft)
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.issues).toContainEqual(expect.objectContaining({
+        path: 'draft.simulation.schemaVersion',
+      }))
     }
   })
 })

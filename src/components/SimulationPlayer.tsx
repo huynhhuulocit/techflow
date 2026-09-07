@@ -8,6 +8,7 @@ import {
   getSimulationScenario,
   getSimulationSnapshot,
   reduceSimulationState,
+  simulationReviewHash,
   simulationSpeeds,
 } from '../simulation'
 import type { SimulationAction, SimulationRuntimeState, SimulationSpeed } from '../simulation'
@@ -25,6 +26,7 @@ const simulationCopyByLocale = {
     eyebrow: 'MÔ PHỎNG CÓ KIỂM SOÁT',
     reviewed: 'Đã review',
     needsReview: 'AI draft · cần review',
+    authoredNeedsReview: 'Bản biên soạn · cần review',
     misconception: 'Hiểu lầm cần sửa',
     scenario: 'Scenario',
     speed: 'Tốc độ',
@@ -38,8 +40,10 @@ const simulationCopyByLocale = {
     initialStatus: (scenario: string) => `Trạng thái ban đầu của ${scenario}.`,
     actors: 'Các thành phần trong mô phỏng',
     actorActive: 'Đang xử lý',
+    actorVisited: 'Đã tham gia · còn bước sau',
     actorComplete: 'Đã xử lý',
     actorWaiting: 'Đang chờ',
+    actorSkipped: 'Không tham gia',
     snapshot: 'State snapshot',
     invariants: 'Invariants',
     invariantPass: 'Đạt',
@@ -80,6 +84,7 @@ const simulationCopyByLocale = {
     eyebrow: 'CONTROLLED SIMULATION',
     reviewed: 'Reviewed',
     needsReview: 'AI draft · review required',
+    authoredNeedsReview: 'Authored draft · review required',
     misconception: 'Misconception to correct',
     scenario: 'Scenario',
     speed: 'Speed',
@@ -93,8 +98,10 @@ const simulationCopyByLocale = {
     initialStatus: (scenario: string) => `Initial state for ${scenario}.`,
     actors: 'Simulation actors',
     actorActive: 'Processing',
+    actorVisited: 'Visited · returns later',
     actorComplete: 'Processed',
     actorWaiting: 'Waiting',
+    actorSkipped: 'Not involved',
     snapshot: 'State snapshot',
     invariants: 'Invariants',
     invariantPass: 'Pass',
@@ -137,6 +144,7 @@ function usePrefersReducedMotion() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
   useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
     const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches)
     updatePreference()
@@ -182,6 +190,16 @@ function SimulationPlayback({
   const currentSnapshot = getSimulationSnapshot(spec, state)
   const invariantResults = evaluateSimulationInvariants(spec.invariants, currentSnapshot)
   const currentPosition = state.frame + 1
+  const stateFieldByKey = new Map(
+    spec.schemaVersion === 2
+      ? spec.stateFields.map((field) => [field.key, field] as const)
+      : [],
+  )
+  const reviewLabel = spec.status === 'reviewed'
+    ? copy.reviewed
+    : spec.schemaVersion === 2 && spec.provenance.kind === 'authored'
+      ? copy.authoredNeedsReview
+      : copy.needsReview
 
   useEffect(() => {
     if (!prefersReducedMotion || state.status !== 'playing') return
@@ -217,7 +235,7 @@ function SimulationPlayback({
           <p>{spec.takeaway}</p>
         </div>
         <span className={`simulation-player__review-status simulation-player__review-status--${spec.status}`}>
-          {spec.status === 'reviewed' ? copy.reviewed : copy.needsReview}
+          {reviewLabel}
         </span>
       </header>
 
@@ -278,7 +296,13 @@ function SimulationPlayback({
         {spec.actors.map((actor) => {
           const isHighlighted = currentTransition?.highlights.includes(actor.id) ?? false
           const actorState = getSimulationActorPlaybackState(actor.id, scenario, state)
-          const actorStateLabel = actorState === 'active' ? copy.actorActive : actorState === 'complete' ? copy.actorComplete : copy.actorWaiting
+          const actorStateLabel = actorState === 'active'
+            ? copy.actorActive
+            : actorState === 'visited'
+              ? copy.actorVisited
+              : actorState === 'complete'
+                ? copy.actorComplete
+                : state.status === 'complete' ? copy.actorSkipped : copy.actorWaiting
           return (
             <li key={actor.id} data-state={actorState} data-highlighted={isHighlighted || undefined}>
               <span className="simulation-player__actor-icon" aria-hidden="true">
@@ -311,9 +335,13 @@ function SimulationPlayback({
           <dl>
             {Object.entries(currentSnapshot).map(([key, value]) => {
               const highlighted = currentTransition?.highlights.includes(key) ?? false
+              const stateField = stateFieldByKey.get(key)
               return (
                 <div key={key} data-highlighted={highlighted || undefined}>
-                  <dt>{key}</dt>
+                  <dt>
+                    <span>{stateField?.label ?? key}</span>
+                    {stateField && <small>{stateField.description}</small>}
+                  </dt>
                   <dd>{formatScalar(value, copy.undefinedValue)}</dd>
                 </div>
               )
@@ -411,7 +439,7 @@ export function SimulationPlayer(props: SimulationPlayerProps) {
 
   return (
     <SimulationPlayback
-      key={`${validation.data.id}:${validation.data.sourceContentHash}`}
+      key={`${validation.data.id}:${simulationReviewHash(validation.data)}`}
       {...props}
       spec={validation.data}
     />

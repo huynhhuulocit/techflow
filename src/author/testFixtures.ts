@@ -1,4 +1,4 @@
-import type { QuestionDraft, SimulationSpec } from '../content/types'
+import type { QuestionDraft, QuestionSimulationSpec } from '../content/types'
 import { simulationReviewHash } from '../simulation'
 import { questionContentHash } from './questionContentHash'
 
@@ -16,9 +16,9 @@ export const testContent: QuestionDraft['content'] = {
 export function createTestSimulation(
   draftId = 'draft-test-1',
   contentHash = questionContentHash(testContent),
-  status: SimulationSpec['status'] = 'generated-needs-review',
-): SimulationSpec {
-  const simulation: SimulationSpec = {
+  status: QuestionSimulationSpec['status'] = 'generated-needs-review',
+): QuestionSimulationSpec {
+  const simulation: QuestionSimulationSpec = {
     schemaVersion: 1,
     id: 'simulation-test-1',
     sourceQuestionId: draftId,

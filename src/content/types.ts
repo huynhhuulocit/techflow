@@ -121,7 +121,7 @@ export type QuestionDraft = {
       contentHash: string
     }
   }
-  simulation?: SimulationSpec
+  simulation?: QuestionSimulationSpec
 }
 
 export type SimulationKind = 'sequence' | 'flow' | 'state'
@@ -162,11 +162,14 @@ export type SimulationInvariant = {
   expected: SimulationScalar
 }
 
-export type SimulationSpec = {
-  schemaVersion: 1
+export type SimulationStateField = {
+  key: string
+  label: string
+  description: string
+}
+
+export type SimulationPlaybackSpec = {
   id: string
-  sourceQuestionId: string
-  sourceContentHash: string
   locale: Locale
   kind: SimulationKind
   learningObjective: string
@@ -175,16 +178,51 @@ export type SimulationSpec = {
   actors: SimulationActor[]
   scenarios: SimulationScenario[]
   invariants: SimulationInvariant[]
+}
+
+export type SimulationGeneration = {
+  model: string
+  promptVersion: string
+  generatedAt: string
+  responseId?: string
+  inputHash: string
+}
+
+/** Question Studio payload retained as schema v1 for saved-draft compatibility. */
+export type QuestionSimulationSpec = SimulationPlaybackSpec & {
+  schemaVersion: 1
+  sourceQuestionId: string
+  sourceContentHash: string
   status: 'generated-needs-review' | 'reviewed'
-  generation: {
-    model: string
-    promptVersion: string
-    generatedAt: string
-    responseId?: string
-    inputHash: string
-  }
+  generation: SimulationGeneration
   review?: InterviewReviewMetadata
 }
+
+export type LessonSimulationSource = {
+  kind: 'lesson'
+  slug: string
+  contentHash: string
+}
+
+export type LessonSimulationProvenance =
+  | {
+      kind: 'authored'
+      author: string
+      createdAt: string
+    }
+  | ({ kind: 'ai-generated' } & SimulationGeneration)
+
+/** Lesson-bound payload with explicit source and authorship provenance. */
+export type LessonSimulationSpec = SimulationPlaybackSpec & {
+  schemaVersion: 2
+  source: LessonSimulationSource
+  stateFields: SimulationStateField[]
+  provenance: LessonSimulationProvenance
+  status: 'draft-needs-review' | 'generated-needs-review' | 'reviewed'
+  review?: InterviewReviewMetadata
+}
+
+export type SimulationSpec = QuestionSimulationSpec | LessonSimulationSpec
 
 export type WorkflowStep = {
   id: string
@@ -194,7 +232,84 @@ export type WorkflowStep = {
   color: string
 }
 
-export type Lesson = {
+export type LessonActor = {
+  id: string
+  label: string
+  responsibility: string
+}
+
+export type LessonMechanismStep = {
+  id: string
+  actorId: string
+  title: string
+  detail: string
+}
+
+export type LessonProductionTradeOff = {
+  title: string
+  benefit: string
+  cost: string
+  decisionRule: string
+}
+
+export type LessonMisconception = {
+  claim: string
+  correction: string
+}
+
+export type LessonAppliedExample = {
+  label: string
+  summary: string
+  steps: string[]
+}
+
+export type LessonEvidence = {
+  label: string
+  url: string
+  note?: string
+}
+
+export type LessonContent = {
+  scope: string
+  mentalModel: string
+  conceptualExplanation: string
+  actors: LessonActor[]
+  mechanism: LessonMechanismStep[]
+  productionTradeOffs: LessonProductionTradeOff[]
+  misconceptions: LessonMisconception[]
+  appliedExample: LessonAppliedExample
+  evidence: LessonEvidence[]
+}
+
+export type LessonReviewStatus = 'draft-needs-review' | 'reviewed'
+
+export type LessonTranslationStatus = 'translated-needs-review' | 'reviewed'
+
+export type LessonReviewMetadata = InterviewReviewMetadata
+
+export type LessonTechnicalReviewState =
+  | {
+      reviewStatus: 'draft-needs-review'
+      review?: never
+    }
+  | {
+      reviewStatus: 'reviewed'
+      review: LessonReviewMetadata
+    }
+
+export type LessonTranslationReviewState =
+  | {
+      translationStatus: 'translated-needs-review'
+      translatedFromHash: string
+      translationReview?: never
+    }
+  | {
+      translationStatus: 'reviewed'
+      translatedFromHash: string
+      translationReview: LessonReviewMetadata
+    }
+
+type LessonBase = {
   slug: string
   title: string
   shortAnswer: string
@@ -212,6 +327,46 @@ export type Lesson = {
     relatedSlugs: string[]
   }
 }
+
+/**
+ * Compact lessons remain valid while they are migrated to the rich three-layer
+ * content model. They cannot claim a technical or translation review because
+ * there is no rich content payload for that review to attest to.
+ */
+export type LegacyLesson = LessonBase & {
+  content?: never
+  simulation?: never
+  locale?: never
+  reviewStatus?: never
+  review?: never
+  translationStatus?: never
+  translatedFromHash?: never
+  translationReview?: never
+}
+
+type RichVietnameseLesson = LessonBase & {
+  content: LessonContent
+  simulation?: LessonSimulationSpec
+  locale: 'vi'
+  translationStatus?: never
+  translatedFromHash?: never
+  translationReview?: never
+}
+
+type RichEnglishLesson = LessonBase & {
+  content: LessonContent
+  simulation?: LessonSimulationSpec
+  locale: 'en'
+} & LessonTranslationReviewState
+
+/**
+ * Technical review and English translation review are independent assertions.
+ * Both hashes bind to the complete claim-bearing lesson payload rather than to
+ * the nested rich-content object alone.
+ */
+export type RichLesson = (RichVietnameseLesson | RichEnglishLesson) & LessonTechnicalReviewState
+
+export type Lesson = LegacyLesson | RichLesson
 
 export type SearchRelation = {
   concepts: string[]

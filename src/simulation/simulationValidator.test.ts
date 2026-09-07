@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { SimulationSpec } from '../content/types'
+import { createPwaKitArchitectureSimulation } from '../content/lessonSimulations/pwaKitArchitecture'
+import type { LessonSimulationSpec, QuestionSimulationSpec } from '../content/types'
 import {
   canonicalSimulationReviewContent,
   simulationReviewHash,
@@ -8,7 +9,7 @@ import {
 
 const HASH = 'a'.repeat(64)
 
-function validSpec(): SimulationSpec {
+function validSpec(): QuestionSimulationSpec {
   return {
     schemaVersion: 1,
     id: 'sim.queue',
@@ -66,9 +67,9 @@ function validSpec(): SimulationSpec {
   }
 }
 
-type TestSimulationSpec = SimulationSpec & {
+type TestSimulationSpec = QuestionSimulationSpec & {
   html?: string
-  actors: Array<SimulationSpec['actors'][number] & { color?: string }>
+  actors: Array<QuestionSimulationSpec['actors'][number] & { color?: string }>
 }
 
 function cloneSpec(): TestSimulationSpec {
@@ -196,6 +197,35 @@ describe('validateSimulationSpec', () => {
     }
   })
 
+  it('rejects a failure scenario whose terminal machine state violates no invariant', () => {
+    const spec = cloneSpec()
+    spec.scenarios.push({
+      id: 'failure-without-evidence',
+      label: 'Failure chỉ tồn tại trong nhãn',
+      kind: 'failure',
+      initialSnapshot: { phase: 'new', deliveryCount: 0 },
+      transitions: [{
+        id: 'failure-without-evidence.finish',
+        actorId: 'consumer',
+        event: 'Gắn nhãn failed',
+        explanation: 'Terminal state nói failed nhưng machine state vẫn thỏa mọi invariant.',
+        snapshot: { phase: 'failed', deliveryCount: 1 },
+        highlights: ['consumer', 'phase'],
+      }],
+      terminalState: 'failed',
+      terminalSummary: 'Không có invariant nào chứng minh failure.',
+    })
+
+    const result = validateSimulationSpec(spec)
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.issues).toContainEqual({
+        path: 'simulation.scenarios[1].transitions[0].snapshot',
+        message: 'Failure terminal snapshot phải vi phạm ít nhất một invariant để chứng minh failure bằng machine state.',
+      })
+    }
+  })
+
   it('rejects a decorative no-op transition', () => {
     const spec = cloneSpec()
     spec.scenarios[0].transitions[0].snapshot = { ...spec.scenarios[0].initialSnapshot }
@@ -255,6 +285,67 @@ describe('validateSimulationSpec', () => {
     expect(result.success).toBe(false)
     if (!result.success) {
       expect(result.issues).toContainEqual({
+        path: 'simulation.review.contentHash',
+        message: 'Review contentHash không khớp canonical simulation content hiện tại.',
+      })
+    }
+  })
+
+  it('accepts a strict lesson-bound schema v2 without changing question schema v1', () => {
+    const lessonSimulation = createPwaKitArchitectureSimulation('vi', HASH)
+    const lessonResult = validateSimulationSpec(lessonSimulation)
+    const questionResult = validateSimulationSpec(validSpec())
+
+    expect(lessonResult.success).toBe(true)
+    expect(questionResult.success).toBe(true)
+    if (lessonResult.success) {
+      expect(lessonResult.data.schemaVersion).toBe(2)
+      expect(lessonResult.data.source).toEqual({
+        kind: 'lesson',
+        slug: 'pwa-kit-architecture',
+        contentHash: HASH,
+      })
+      expect(lessonResult.data.stateFields).toHaveLength(10)
+    }
+  })
+
+  it('rejects hybrid v2 payloads, incomplete state metadata, and dishonest provenance status', () => {
+    const simulation = createPwaKitArchitectureSimulation('vi', HASH) as LessonSimulationSpec & {
+      sourceQuestionId?: string
+    }
+    simulation.sourceQuestionId = 'question-not-allowed'
+    simulation.stateFields = simulation.stateFields.slice(1)
+    simulation.provenance = {
+      kind: 'authored',
+      author: 'Lesson author',
+      createdAt: '2026-09-07T06:30:00.000Z',
+    }
+
+    const result = validateSimulationSpec(simulation)
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.issues.some((issue) => issue.path === 'simulation.sourceQuestionId')).toBe(true)
+      expect(result.issues.some((issue) => issue.path === 'simulation.stateFields')).toBe(true)
+      expect(result.issues.some((issue) => issue.path === 'simulation.status')).toBe(true)
+    }
+  })
+
+  it('binds v2 review hashes to source, state metadata, and provenance', () => {
+    const reviewed = createPwaKitArchitectureSimulation('en', HASH)
+    reviewed.status = 'reviewed'
+    reviewed.review = {
+      reviewer: 'Simulation reviewer',
+      reviewedAt: '2026-09-07T08:00:00.000Z',
+      evidence: [{ label: 'Salesforce docs', url: 'https://example.com/salesforce' }],
+      contentHash: simulationReviewHash(reviewed),
+    }
+    expect(validateSimulationSpec(reviewed).success).toBe(true)
+
+    reviewed.stateFields[0].description += ' Changed after review.'
+    const stale = validateSimulationSpec(reviewed)
+    expect(stale.success).toBe(false)
+    if (!stale.success) {
+      expect(stale.issues).toContainEqual({
         path: 'simulation.review.contentHash',
         message: 'Review contentHash không khớp canonical simulation content hiện tại.',
       })

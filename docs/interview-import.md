@@ -4,11 +4,13 @@ Tài liệu này mô tả ranh giới dữ liệu, cách import và quy tắc re
 
 ## Phạm vi dữ liệu nguồn
 
-Nguồn canonical Vietnamese hiện tại là thư mục:
+Nguồn canonical Vietnamese trong standalone repository là thư mục:
 
 ```text
-D:\research\gameStream\docs\interview
+content/interview/vi
 ```
+
+Bộ Markdown này ban đầu được nhập từ `gameStream/docs/interview`, sau đó được giữ cùng TechFlow để development, CI và deployment không phụ thuộc đường dẫn hoặc repository bên ngoài.
 
 Snapshot Vietnamese được tạo từ đúng **39 level files**, tương ứng:
 
@@ -53,7 +55,7 @@ selected locale snapshot
   -> Interview Question Bank UI
 ```
 
-Frontend không đọc `D:\research\gameStream` ở runtime. Importer đọc Markdown trong lúc phát triển, kiểm tra cấu trúc, rồi sinh snapshot TypeScript để TechFlow có thể chạy độc lập.
+Frontend không đọc Markdown ở runtime. Importer đọc nguồn bundled trong `content/interview/vi` lúc phát triển, kiểm tra cấu trúc, rồi sinh snapshot TypeScript để frontend chạy độc lập.
 
 Hai generated snapshots là output của importer:
 
@@ -62,7 +64,7 @@ src/content/generated/gameStreamInterview.ts
 src/content/generated/gameStreamInterview.en.ts
 ```
 
-Không sửa thủ công file generated. Khi nội dung nguồn thay đổi, hãy chạy lại importer, kiểm tra diff và commit cả snapshot mới. Nếu cần sửa nội dung, sửa Markdown nguồn hoặc thay đổi parser/mapping một cách có chủ đích.
+Không sửa thủ công file generated. Khi nội dung nguồn thay đổi, hãy chạy lại importer, kiểm tra diff và commit cả Markdown nguồn lẫn snapshot mới. Nếu cần sửa nội dung, sửa `content/interview/vi` hoặc thay đổi parser/mapping một cách có chủ đích.
 
 Technical review của canonical Vietnamese được lưu riêng tại:
 
@@ -76,14 +78,7 @@ English TypeScript source overlay nằm tại `src/content/interview/en/typescri
 
 ## Import và validation
 
-Đặt hai repository cạnh nhau theo cấu trúc mặc định:
-
-```text
-D:\research\TechFlow
-D:\research\gameStream
-```
-
-Từ thư mục `D:\research\TechFlow`, chạy:
+Từ thư mục gốc của standalone TechFlow repository, chạy:
 
 ```bash
 npm run content:import

@@ -2,7 +2,7 @@ import type {
   InterviewQuestionCopy,
   QuestionDraft,
   SimulationKind,
-} from '../content/types'
+} from '../content/types.ts'
 
 const SHA256_CONSTANTS = [
   0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -159,7 +159,7 @@ export function simulationEditorIdentity(input: SimulationGenerationInputShape) 
 
 export type SimulationIntegrityWarning = {
   draftId: string
-  code: 'source-id-mismatch' | 'locale-mismatch' | 'content-hash-mismatch'
+  code: 'unsupported-schema' | 'source-id-mismatch' | 'locale-mismatch' | 'content-hash-mismatch'
   message: string
 }
 
@@ -171,7 +171,11 @@ export function dropStaleDraftSimulation(draft: QuestionDraft): {
 
   let code: SimulationIntegrityWarning['code'] | undefined
   let message = ''
-  if (draft.simulation.sourceQuestionId !== draft.id) {
+  const simulationSchemaVersion = (draft.simulation as { schemaVersion?: unknown }).schemaVersion
+  if (simulationSchemaVersion !== 1) {
+    code = 'unsupported-schema'
+    message = 'Simulation đã bị gỡ vì Question Studio chỉ hỗ trợ schemaVersion 1.'
+  } else if (draft.simulation.sourceQuestionId !== draft.id) {
     code = 'source-id-mismatch'
     message = 'Simulation đã bị gỡ vì tham chiếu sang draft ID khác.'
   } else if (draft.simulation.locale !== draft.locale) {

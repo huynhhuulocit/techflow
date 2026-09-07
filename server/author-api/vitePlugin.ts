@@ -1,10 +1,24 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
-import type { QuestionDraft, SimulationSpec } from '../../src/content/types.ts'
+import {
+  LESSON_SIMULATION_PROMPT_VERSION,
+  lessonSimulationGenerationInputHash,
+} from '../../src/author/lessonSimulationGeneration.ts'
+import { lessonClaimSourceHash } from '../../src/content/lessonValidation.ts'
+import type { LessonSimulationSpec, QuestionDraft, QuestionSimulationSpec } from '../../src/content/types.ts'
 import { validateSimulationSpec } from '../../src/simulation/simulationValidator.ts'
-import { AiUpstreamError, generateQuestionBatch, generateSimulation } from './openaiClient.ts'
-import { QuestionGenerateRequestSchema, SimulationGenerateRequestSchema } from './schemas.ts'
+import {
+  AiUpstreamError,
+  generateLessonSimulation,
+  generateQuestionBatch,
+  generateSimulation,
+} from './openaiClient.ts'
+import {
+  LessonSimulationGenerateRequestSchema,
+  QuestionGenerateRequestSchema,
+  SimulationGenerateRequestSchema,
+} from './schemas.ts'
 
 type AuthorApiConfig = {
   apiKey?: string
@@ -105,6 +119,17 @@ function assertSafeGeneratedText(value: unknown) {
   }
 }
 
+function stateSnapshot(entries: readonly { key: string; value: string | number | boolean | null }[]) {
+  const snapshot: Record<string, string | number | boolean | null> = {}
+  for (const entry of entries) {
+    if (Object.prototype.hasOwnProperty.call(snapshot, entry.key)) {
+      throw new AiUpstreamError('The AI response contained a duplicate state key.', 'invalid_output')
+    }
+    snapshot[entry.key] = entry.value
+  }
+  return snapshot
+}
+
 function normalizeQuestionTitle(value: string) {
   return value
     .normalize('NFD')
@@ -165,18 +190,41 @@ function createSimulationSpec(
   parsedInput: ReturnType<typeof SimulationGenerateRequestSchema.parse>,
   generated: Awaited<ReturnType<typeof generateSimulation>>,
   model: string,
-): SimulationSpec {
+): QuestionSimulationSpec {
   const generatedAt = new Date().toISOString()
   const sourceContentHash = stableHash(parsedInput.draft.content)
+  assertSafeGeneratedText(generated.output)
 
-  const simulation: SimulationSpec = {
+  const playbackScenarios = generated.output.scenarios.map(scenario => ({
+    id: scenario.id,
+    label: scenario.label,
+    kind: scenario.kind,
+    initialSnapshot: stateSnapshot(scenario.initialState),
+    transitions: scenario.transitions.map(transition => ({
+      id: transition.id,
+      actorId: transition.actorId,
+      event: transition.event,
+      explanation: transition.explanation,
+      snapshot: stateSnapshot(transition.state),
+      highlights: transition.highlights,
+    })),
+    terminalState: scenario.terminalState,
+    terminalSummary: scenario.terminalSummary,
+  }))
+
+  const simulation: QuestionSimulationSpec = {
     schemaVersion: 1,
     id: `simulation-${randomUUID()}`,
     sourceQuestionId: parsedInput.draft.id,
     sourceContentHash,
     locale: parsedInput.draft.locale,
     kind: parsedInput.kind,
-    ...generated.output,
+    learningObjective: generated.output.learningObjective,
+    misconception: generated.output.misconception,
+    takeaway: generated.output.takeaway,
+    actors: generated.output.actors,
+    scenarios: playbackScenarios,
+    invariants: generated.output.invariants,
     status: 'generated-needs-review',
     generation: {
       model,
@@ -200,11 +248,86 @@ function createSimulationSpec(
   return validation.data
 }
 
+function createLessonSimulationSpec(
+  parsedInput: ReturnType<typeof LessonSimulationGenerateRequestSchema.parse>,
+  generated: Awaited<ReturnType<typeof generateLessonSimulation>>,
+  model: string,
+): LessonSimulationSpec {
+  assertSafeGeneratedText(generated.output)
+
+  const lessonActorIds = parsedInput.source.content.actors.map(actor => actor.id)
+  const generatedActorIds = generated.output.actors.map(actor => actor.id)
+  if (
+    lessonActorIds.length !== generatedActorIds.length
+    || lessonActorIds.some((actorId, index) => generatedActorIds[index] !== actorId)
+  ) {
+    throw new AiUpstreamError('The AI response did not preserve the lesson actor IDs and order.', 'invalid_output')
+  }
+
+  const playbackScenarios = generated.output.scenarios.map(scenario => ({
+    id: scenario.id,
+    label: scenario.label,
+    kind: scenario.kind,
+    initialSnapshot: stateSnapshot(scenario.initialState),
+    transitions: scenario.transitions.map(transition => ({
+      id: transition.id,
+      actorId: transition.actorId,
+      event: transition.event,
+      explanation: transition.explanation,
+      snapshot: stateSnapshot(transition.state),
+      highlights: transition.highlights,
+    })),
+    terminalState: scenario.terminalState,
+    terminalSummary: scenario.terminalSummary,
+  }))
+
+  const simulation: LessonSimulationSpec = {
+    schemaVersion: 2,
+    id: `lesson-simulation-${randomUUID()}`,
+    source: {
+      kind: 'lesson',
+      slug: parsedInput.source.slug,
+      contentHash: parsedInput.sourceContentHash,
+    },
+    locale: parsedInput.source.locale,
+    kind: parsedInput.kind,
+    learningObjective: generated.output.learningObjective,
+    misconception: generated.output.misconception,
+    takeaway: generated.output.takeaway,
+    actors: generated.output.actors,
+    stateFields: generated.output.stateFields,
+    scenarios: playbackScenarios,
+    invariants: generated.output.invariants,
+    status: 'generated-needs-review',
+    provenance: {
+      kind: 'ai-generated',
+      model,
+      promptVersion: LESSON_SIMULATION_PROMPT_VERSION,
+      generatedAt: new Date().toISOString(),
+      responseId: generated.responseId,
+      inputHash: lessonSimulationGenerationInputHash(parsedInput),
+    },
+  }
+
+  const validation = validateSimulationSpec(simulation)
+  if (!validation.success) {
+    throw new AiUpstreamError('The AI response did not describe a valid deterministic lesson simulation.', 'invalid_output')
+  }
+  if (
+    parsedInput.failureScenario
+    && !validation.data.scenarios.some(scenario => scenario.kind === 'failure' || scenario.kind === 'what-if')
+  ) {
+    throw new AiUpstreamError('The AI response omitted the requested failure scenario.', 'invalid_output')
+  }
+  return validation.data
+}
+
 async function handleAuthorRequest(request: IncomingMessage, response: ServerResponse, config: AuthorApiConfig) {
   const pathname = new URL(request.url ?? '/', 'http://127.0.0.1').pathname
   const isQuestionRoute = pathname === '/api/author/questions/generate'
   const isSimulationRoute = pathname === '/api/author/simulations/generate'
-  if (!isQuestionRoute && !isSimulationRoute) return false
+  const isLessonSimulationRoute = pathname === '/api/author/lesson-simulations/generate'
+  if (!isQuestionRoute && !isSimulationRoute && !isLessonSimulationRoute) return false
 
   if (!config.apiKey || !config.model || !config.authorToken) {
     writeJson(response, 503, { error: 'ai_not_configured', message: 'Local AI authoring is not configured.' })
@@ -267,13 +390,33 @@ async function handleAuthorRequest(request: IncomingMessage, response: ServerRes
       return true
     }
 
-    const parsed = SimulationGenerateRequestSchema.safeParse(rawBody)
+    if (isSimulationRoute) {
+      const parsed = SimulationGenerateRequestSchema.safeParse(rawBody)
+      if (!parsed.success) {
+        writeJson(response, 400, { error: 'invalid_request', issues: parsed.error.issues.map(issue => ({ path: issue.path, message: issue.message })) })
+        return true
+      }
+      const generated = await generateSimulation({ apiKey: config.apiKey, model: config.model }, parsed.data)
+      writeJson(response, 200, { simulation: createSimulationSpec(parsed.data, generated, config.model), requestId })
+      return true
+    }
+
+    const parsed = LessonSimulationGenerateRequestSchema.safeParse(rawBody)
     if (!parsed.success) {
       writeJson(response, 400, { error: 'invalid_request', issues: parsed.error.issues.map(issue => ({ path: issue.path, message: issue.message })) })
       return true
     }
-    const generated = await generateSimulation({ apiKey: config.apiKey, model: config.model }, parsed.data)
-    writeJson(response, 200, { simulation: createSimulationSpec(parsed.data, generated, config.model), requestId })
+    const verifiedSourceHash = lessonClaimSourceHash(parsed.data.source)
+    if (verifiedSourceHash !== parsed.data.sourceContentHash) {
+      writeJson(response, 400, {
+        error: 'source_hash_mismatch',
+        message: 'The lesson source hash does not match its claim-bearing content.',
+        requestId,
+      })
+      return true
+    }
+    const generated = await generateLessonSimulation({ apiKey: config.apiKey, model: config.model }, parsed.data)
+    writeJson(response, 200, { simulation: createLessonSimulationSpec(parsed.data, generated, config.model), requestId })
     return true
   } catch (error) {
     if (error instanceof AiUpstreamError) {

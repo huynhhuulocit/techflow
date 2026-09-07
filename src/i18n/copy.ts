@@ -48,7 +48,27 @@ export type AppCopy = {
     quickAnswer: string
     overviewTitle: string
     overviewDescription: string
+    scopeLabel: string
+    reviewPending: string
+    reviewPendingBody: string
+    reviewed: string
+    translationReviewPending: string
+    translationReviewPendingBody: string
+    translationReviewed: string
+    mentalModelTitle: string
+    actorsTitle: string
+    mechanismTitle: string
+    tradeOffsTitle: string
+    benefitLabel: string
+    costLabel: string
+    decisionRuleLabel: string
+    misconceptionsTitle: string
+    correctionLabel: string
+    appliedExampleTitle: string
+    evidenceTitle: string
     simulationPending: string
+    simulationInvalidTitle: string
+    simulationInvalidBody: string
     followUps: string
   }
   workflow: {
@@ -203,9 +223,29 @@ export const copyByLocale = {
       sections: ['Trả lời nhanh', 'Hiểu bản chất', 'Mô phỏng workflow', 'Câu hỏi đào sâu'],
       visualLesson: 'Bài học trực quan',
       quickAnswer: 'TRẢ LỜI TRONG 30 GIÂY',
-      overviewTitle: 'Bức tranh tổng quan',
+      overviewTitle: 'Hiểu bản chất',
       overviewDescription: 'Thay vì chỉ ghi nhớ định nghĩa, hãy theo dõi các actor, trạng thái và bước chuyển trong cơ chế. Cách nhìn này giúp bạn giải thích rõ nguyên nhân, kết quả và production trade-off.',
+      scopeLabel: 'PHẠM VI BÀI HỌC',
+      reviewPending: 'Đang chờ technical review',
+      reviewPendingBody: 'Nội dung đã gắn nguồn tham khảo nhưng chưa được TechFlow đánh dấu là verified.',
+      reviewed: 'Đã technical review',
+      translationReviewPending: 'Bản dịch đang chờ review',
+      translationReviewPendingBody: 'Technical review và translation review được theo dõi độc lập.',
+      translationReviewed: 'Bản dịch đã được review',
+      mentalModelTitle: 'Mental model',
+      actorsTitle: 'Ai chịu trách nhiệm cho phần nào?',
+      mechanismTitle: 'Cơ chế theo từng bước',
+      tradeOffsTitle: 'Production trade-offs',
+      benefitLabel: 'Lợi ích',
+      costLabel: 'Đánh đổi',
+      decisionRuleLabel: 'Khi ra quyết định',
+      misconceptionsTitle: 'Hiểu lầm thường gặp',
+      correctionLabel: 'Hiểu đúng',
+      appliedExampleTitle: 'Ví dụ áp dụng',
+      evidenceTitle: 'Nguồn để technical review',
       simulationPending: 'Mô phỏng cho bài này đang được xây dựng.',
+      simulationInvalidTitle: 'Mô phỏng cần được cập nhật',
+      simulationInvalidBody: 'Simulation không còn khớp với phiên bản bài học hiện tại nên đã được dừng để tránh giải thích sai cơ chế.',
       followUps: 'INTERVIEWER CÓ THỂ HỎI TIẾP',
     },
     workflow: {
@@ -362,9 +402,29 @@ export const copyByLocale = {
       sections: ['Quick answer', 'Understand the mechanism', 'Workflow simulation', 'Follow-up questions'],
       visualLesson: 'Visual lesson',
       quickAnswer: '30-SECOND ANSWER',
-      overviewTitle: 'The big picture',
+      overviewTitle: 'Understand the mechanism',
       overviewDescription: 'Instead of memorizing a definition, follow the actors, state, and transitions in the mechanism. This mental model helps you explain causes, outcomes, and production trade-offs.',
+      scopeLabel: 'LESSON SCOPE',
+      reviewPending: 'Technical review pending',
+      reviewPendingBody: 'Sources are attached, but TechFlow has not marked this content as verified.',
+      reviewed: 'Technical review complete',
+      translationReviewPending: 'Translation review pending',
+      translationReviewPendingBody: 'Technical review and translation review are tracked independently.',
+      translationReviewed: 'Translation review complete',
+      mentalModelTitle: 'Mental model',
+      actorsTitle: 'Who owns each responsibility?',
+      mechanismTitle: 'Mechanism step by step',
+      tradeOffsTitle: 'Production trade-offs',
+      benefitLabel: 'Benefit',
+      costLabel: 'Trade-off',
+      decisionRuleLabel: 'Decision rule',
+      misconceptionsTitle: 'Common misconceptions',
+      correctionLabel: 'Correct model',
+      appliedExampleTitle: 'Applied example',
+      evidenceTitle: 'Sources for technical review',
       simulationPending: 'A simulation for this lesson is being built.',
+      simulationInvalidTitle: 'Simulation update required',
+      simulationInvalidBody: 'This simulation no longer matches the current lesson version, so playback is disabled to avoid teaching the wrong mechanism.',
       followUps: 'THE INTERVIEWER MAY ASK NEXT',
     },
     workflow: {

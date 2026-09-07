@@ -1,8 +1,8 @@
 import type {
   SimulationInvariant,
+  SimulationPlaybackSpec,
   SimulationScalar,
   SimulationScenario,
-  SimulationSpec,
 } from '../content/types.ts'
 
 export const simulationSpeeds = [0.5, 1, 1.5, 2] as const
@@ -34,21 +34,21 @@ export type SimulationInvariantResult = {
   actual: SimulationScalar | undefined
 }
 
-export type SimulationActorPlaybackState = 'active' | 'complete' | 'waiting'
+export type SimulationActorPlaybackState = 'active' | 'visited' | 'complete' | 'waiting'
 
-function firstScenario(spec: SimulationSpec): SimulationScenario | undefined {
+function firstScenario(spec: SimulationPlaybackSpec): SimulationScenario | undefined {
   return spec.scenarios.find((scenario) => scenario.kind === 'happy-path') ?? spec.scenarios[0]
 }
 
 export function getSimulationScenario(
-  spec: SimulationSpec,
+  spec: SimulationPlaybackSpec,
   scenarioId: string,
 ): SimulationScenario | undefined {
   return spec.scenarios.find((scenario) => scenario.id === scenarioId)
 }
 
 export function createInitialSimulationState(
-  spec: SimulationSpec,
+  spec: SimulationPlaybackSpec,
   scenarioId?: string,
 ): SimulationRuntimeState {
   const requestedScenario = scenarioId ? getSimulationScenario(spec, scenarioId) : undefined
@@ -68,7 +68,7 @@ export function createInitialSimulationState(
  * reviewed simulation definition.
  */
 export function reduceSimulationState(
-  spec: SimulationSpec,
+  spec: SimulationPlaybackSpec,
   state: SimulationRuntimeState,
   action: SimulationAction,
 ): SimulationRuntimeState {
@@ -136,7 +136,7 @@ export function reduceSimulationState(
 }
 
 export function getSimulationSnapshot(
-  spec: SimulationSpec,
+  spec: SimulationPlaybackSpec,
   state: SimulationRuntimeState,
 ): Record<string, SimulationScalar> {
   const scenario = getSimulationScenario(spec, state.scenarioId) ?? firstScenario(spec)
@@ -147,9 +147,9 @@ export function getSimulationSnapshot(
 
 /**
  * Actor progress and transition highlighting are intentionally separate. The
- * actor for the visible transition is active while playback is in progress,
- * but becomes complete on the terminal frame; the UI may still highlight that
- * final transition to preserve step context.
+ * actor for the visible transition is active while playback is in progress.
+ * An actor is only complete after its final transition in the scenario; an
+ * actor that already ran but will participate again is marked visited.
  */
 export function getSimulationActorPlaybackState(
   actorId: string,
@@ -162,7 +162,11 @@ export function getSimulationActorPlaybackState(
   const actorHasRun = scenario.transitions
     .slice(0, Math.max(0, state.frame + 1))
     .some((transition) => transition.actorId === actorId)
-  return actorHasRun ? 'complete' : 'waiting'
+  const actorRunsAgain = scenario.transitions
+    .slice(Math.max(0, state.frame + 1))
+    .some((transition) => transition.actorId === actorId)
+  if (!actorHasRun) return 'waiting'
+  return actorRunsAgain ? 'visited' : 'complete'
 }
 
 export function evaluateSimulationInvariants(
