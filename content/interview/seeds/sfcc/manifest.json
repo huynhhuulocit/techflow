@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "kind": "techflow-interview-question-seed",
+  "id": "hermes-tl-sfcc",
+  "topicSlug": "sfcc",
+  "title": "Technical SFCC interview track",
+  "originalLanguage": "en",
+  "status": "prompt-only-not-published",
+  "source": {
+    "repository": "hermes-agent",
+    "relativePath": "hermes/skills/e/references/tl-sfcc.md",
+    "contentSha256": "c224029124651da3d540daf8ae5e3e0a3e5df2e33b73d5d66666aaa712ccc714"
+  },
+  "levelMapping": [
+    {
+      "sourceSection": "Foundation",
+      "level": "junior",
+      "expectedPromptCount": 4
+    },
+    {
+      "sourceSection": "Working",
+      "level": "middle",
+      "expectedPromptCount": 6
+    },
+    {
+      "sourceSection": "Interview/Senior",
+      "level": "senior",
+      "expectedPromptCount": 5
+    }
+  ],
+  "prompts": [
+    {
+      "id": "sfcc-junior-01",
+      "level": "junior",
+      "sourceSection": "Foundation",
+      "sourcePosition": 1,
+      "text": "Could you briefly describe your experience with SFCC?"
+    },
+    {
+      "id": "sfcc-junior-02",
+      "level": "junior",
+      "sourceSection": "Foundation",
+      "sourcePosition": 2,
+      "text": "What is a cartridge in Salesforce B2C Commerce?"
+    },
+    {
+      "id": "sfcc-junior-03",
+      "level": "junior",
+      "sourceSection": "Foundation",
+      "sourcePosition": 3,
+      "text": "What is the role of an ISML template in SFRA?"
+    },
+    {
+      "id": "sfcc-junior-04",
+      "level": "junior",
+      "sourceSection": "Foundation",
+      "sourcePosition": 4,
+      "text": "How do you normally debug an issue in a storefront?"
+    },
+    {
+      "id": "sfcc-middle-01",
+      "level": "middle",
+      "sourceSection": "Working",
+      "sourcePosition": 1,
+      "text": "How would you customize an SFRA controller without editing the base cartridge?"
+    },
+    {
+      "id": "sfcc-middle-02",
+      "level": "middle",
+      "sourceSection": "Working",
+      "sourcePosition": 2,
+      "text": "When would you use append, prepend, or replace in an SFRA route?"
+    },
+    {
+      "id": "sfcc-middle-03",
+      "level": "middle",
+      "sourceSection": "Working",
+      "sourcePosition": 3,
+      "text": "Why should database writes be wrapped in a transaction?"
+    },
+    {
+      "id": "sfcc-middle-04",
+      "level": "middle",
+      "sourceSection": "Working",
+      "sourcePosition": 4,
+      "text": "How would you handle a failure from a third-party service during checkout?"
+    },
+    {
+      "id": "sfcc-middle-05",
+      "level": "middle",
+      "sourceSection": "Working",
+      "sourcePosition": 5,
+      "text": "What would you check when a storefront page becomes slow?"
+    },
+    {
+      "id": "sfcc-middle-06",
+      "level": "middle",
+      "sourceSection": "Working",
+      "sourcePosition": 6,
+      "text": "How would you validate an SFCC deployment before release?"
+    },
+    {
+      "id": "sfcc-senior-01",
+      "level": "senior",
+      "sourceSection": "Interview/Senior",
+      "sourcePosition": 1,
+      "text": "How would you decide between extending an existing SFRA flow and replacing it?"
+    },
+    {
+      "id": "sfcc-senior-02",
+      "level": "senior",
+      "sourceSection": "Interview/Senior",
+      "sourcePosition": 2,
+      "text": "How would you investigate an intermittent checkout incident in production?"
+    },
+    {
+      "id": "sfcc-senior-03",
+      "level": "senior",
+      "sourceSection": "Interview/Senior",
+      "sourcePosition": 3,
+      "text": "How would you review an SFCC customization for maintainability?"
+    },
+    {
+      "id": "sfcc-senior-04",
+      "level": "senior",
+      "sourceSection": "Interview/Senior",
+      "sourcePosition": 4,
+      "text": "How would you explain a technical trade-off to a product or project manager?"
+    },
+    {
+      "id": "sfcc-senior-05",
+      "level": "senior",
+      "sourceSection": "Interview/Senior",
+      "sourcePosition": 5,
+      "text": "How would you mentor a developer who repeatedly edits base cartridge code?"
+    }
+  ],
+  "candidateEvidence": [
+    {
+      "label": "SFRA overview",
+      "url": "https://developer.salesforce.com/docs/commerce/b2c-commerce/guide/sfra-overview.html"
+    },
+    {
+      "label": "Working with controllers",
+      "url": "https://developer.salesforce.com/docs/commerce/sfra/guide/b2c-working-with-controllers.html"
+    },
+    {
+      "label": "Customizing SFRA",
+      "url": "https://developer.salesforce.com/docs/commerce/commerce-api/guide/b2c-customizing-sfra.html"
+    },
+    {
+      "label": "SFRA hooks",
+      "url": "https://developer.salesforce.com/docs/commerce/b2c-commerce/guide/b2c-sfra-hooks.html"
+    },
+    {
+      "label": "`dw.system.Transaction`",
+      "url": "https://developer.salesforce.com/docs/commerce/b2c-commerce/references/b2c-script-api/dw.system.Transaction.html"
+    },
+    {
+      "label": "SCAPI getting started",
+      "url": "https://developer.salesforce.com/docs/commerce/sfra/guide/scapi-get-started.html"
+    },
+    {
+      "label": "B2C Commerce site performance",
+      "url": "https://developer.salesforce.com/docs/commerce/b2c-commerce/guide/b2c-site-performance.html"
+    },
+    {
+      "label": "B2C Commerce code deployment",
+      "url": "https://developer.salesforce.com/docs/commerce/commerce-solutions/guide/b2c-code-deployment.html"
+    }
+  ]
+}

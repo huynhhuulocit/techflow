@@ -8,7 +8,7 @@
     "prebuild": "npm run lessons:validate",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "vitest run --exclude tests/interview-translations.test.mjs && node --test tests/interview-translations.test.mjs",
+    "test": "vitest run --exclude tests/interview-translations.test.mjs --exclude tests/sfcc-seed.test.mjs && node --test tests/interview-translations.test.mjs tests/sfcc-seed.test.mjs",
     "test:browser": "node scripts/check-lesson-browser.mjs",
     "test:watch": "vitest",
     "lint": "eslint .",

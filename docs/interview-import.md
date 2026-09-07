@@ -24,6 +24,31 @@ Hai file không thuộc lần import này:
 - `docs/interview/README.md` của GameStream đang rỗng và không phải level file.
 - `overview/overview-api/00_overview-api.md` có cấu trúc study guide riêng, không theo format 15 Q&A. Tài liệu này được giữ cho phase sau dưới dạng **API Overview Study Guide**; importer không được âm thầm chuyển hoặc bỏ qua nó như một level file.
 
+## SFCC authoring seed từ Hermes
+
+Đợt rà soát `D:\research` tìm thấy một nguồn SFCC mới tại `hermes-agent/hermes/skills/e/references/tl-sfcc.md`. Nguồn này đã được giữ độc lập với runtime Hermes trong TechFlow tại:
+
+```text
+content/interview/seeds/sfcc/tl-sfcc.md
+content/interview/seeds/sfcc/manifest.json
+```
+
+Đây là **authoring seed**, chưa phải Question Bank đã publish:
+
+- Có 15 English prompts, được map thành 4 `Junior`, 6 `Middle` và 5 `Senior`.
+- Chưa có `Conclusion`, `Mechanism`, `Trade-off` hoặc applied example nên không được đưa vào generated snapshots.
+- Tám link Salesforce chính thức được giữ dưới dạng `candidateEvidence`; chúng không tự động tạo review status `reviewed`.
+- Manifest dùng repository + relative path và SHA-256 của bản nguồn, không phụ thuộc absolute path `D:\research` khi CI hoặc Cloudflare build.
+- `npm test` kiểm tra bản copy nguồn, prompt order, ID uniqueness, level counts và HTTPS evidence links.
+
+Không được padding bộ seed thành 45 câu chỉ để khớp invariant cũ 15 câu/level, và không được dùng placeholder answer trong learner-facing UI. Để promote seed này vào Question Bank cần một phase riêng:
+
+1. Viết Vietnamese canonical answer đủ ba learning layers và một applied example phù hợp cho từng prompt.
+2. Giữ nguyên original English question trong English overlay và viết/kiểm tra English answer tương ứng.
+3. Generalize importer từ 15 câu cố định mỗi level sang manifest-driven counts, đồng thời bỏ provenance và example label hardcode riêng cho GameStream.
+4. Technical-review từng answer dựa trên Salesforce evidence phù hợp; candidate link chỉ trở thành review evidence sau khi reviewer xác nhận claim và content hash.
+5. Regenerate snapshots, validate counts/IDs/source hashes, rồi kiểm tra filter, detail navigation và locale behavior trong browser.
+
 ## Mapping vào ba learning layers
 
 Mỗi câu hỏi nguồn phải có đủ bốn marker. Importer chuyển chúng sang dữ liệu TechFlow như sau:
