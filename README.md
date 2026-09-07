@@ -17,6 +17,12 @@ npm run lint
 npm run build
 ```
 
+Kiểm tra đầy đủ trước khi deploy:
+
+```bash
+npm run verify:deploy
+```
+
 Browser smoke check cho lesson navigation (cần `npx`; cài Chromium một lần trên máy mới):
 
 ```bash
@@ -35,7 +41,7 @@ npm run content:validate
 npm run build
 ```
 
-Xem ranh giới nguồn và review workflow tại [docs/interview-import.md](docs/interview-import.md). Hướng dẫn Question Studio và AI simulation có bản [Vietnamese](docs/vi/authoring-ai.md) và [English](docs/en/authoring-ai.md). Responsive mobile UX cũng được ghi lại bằng [Vietnamese](docs/vi/mobile-ux.md) và [English](docs/en/mobile-ux.md).
+Xem ranh giới nguồn và review workflow tại [docs/interview-import.md](docs/interview-import.md). Hướng dẫn Question Studio và AI simulation có bản [Vietnamese](docs/vi/authoring-ai.md) và [English](docs/en/authoring-ai.md). Responsive mobile UX cũng được ghi lại bằng [Vietnamese](docs/vi/mobile-ux.md) và [English](docs/en/mobile-ux.md). Quy trình Git-connected Cloudflare Pages nằm tại [Vietnamese](docs/vi/deployment-cloudflare.md) và [English](docs/en/deployment-cloudflare.md).
 
 ## Cấu trúc chính
 

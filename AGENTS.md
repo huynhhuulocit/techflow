@@ -14,6 +14,13 @@ TechFlow is a Vietnamese-first visual technical learning and interview-preparati
 
 - Keep the MVP client-side and low-cost until authentication, persistence, or paid AI features are explicitly requested.
 - Run `npm run build` after implementation changes.
+- Work directly on `main` and push `origin main` by default unless the user explicitly requests another branch or says not to push.
+- Before deployment, run `npm run verify:deploy` plus any relevant browser checks.
+- After a requested change passes validation, stage only in-scope files, create a descriptive commit, and push without waiting for a separate review confirmation.
+- A push to `main` is a production deployment; a push to another branch is a Cloudflare preview deployment.
+- Never push secrets, local environment files, failed validation, or unrelated workspace changes.
+- If the remote has diverged or rejects a normal push, stop and report the blocker; never force-push.
+- Removing the pre-push approval gate does not mark generated technical claims as reviewed; evidence and content-review metadata remain required.
 - Prefer accessible semantic HTML, keyboard-operable controls, and responsive layouts.
 - Do not add an animation library for a motion that CSS can express clearly.
 

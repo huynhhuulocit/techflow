@@ -16,7 +16,8 @@
     "content:check": "node scripts/import-gamestream-interview.mjs --check",
     "content:hash": "node scripts/import-gamestream-interview.mjs --hash",
     "content:validate": "node scripts/validate-interview-content.mjs",
-    "lessons:validate": "vitest run src/content/lessons.test.ts"
+    "lessons:validate": "vitest run src/content/lessons.test.ts",
+    "verify:deploy": "npm run lint && npm test && npm run content:check && npm run content:validate && npm run build"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
